@@ -199,10 +199,14 @@ Remove-Item $Pdf -Force -ErrorAction SilentlyContinue
 # Chrome は起動元プロセスより先に終わることがあるので，出力の完成をポーリングで待つ．
 # 一時プロファイルを使い，起動中の通常のブラウザと衝突させない．
 $profileDir = Join-Path ([IO.Path]::GetTempPath()) ('chrome-pdf-' + [Guid]::NewGuid().ToString('N'))
-# [Uri] で組み立てる (手で 'file:///' + パス を連結すると，Mac/Linux は絶対パスが
-# 既に '/' で始まるため 'file:////...' と2重スラッシュになり，Chrome が正しく読めず
-# 固まる罠がある．2026-08-29，GitHub Actions の macos-latest で発覚)．
-$url = ([Uri]$html).AbsoluteUri
+# file:// URL を OS ごとに手で組み立てる (自前ロジックにする)．
+# Mac/Linux の絶対パスは元から '/' で始まるので 'file://' + パス で3本スラッシュになる．
+# Windows は 'D:\...' の形なので '/' に変えてから 'file:///' を付ける (4本目は不要)．
+# **`[Uri]` クラスに任せるのは避ける**: Windows 上の pwsh で試したところ，Unix 形式の
+# 絶対パス ('/Users/...') を渡すと `.AbsoluteUri` が空文字列になることを確認した
+# (2026-08-29)．実機 (Mac/Linux) でどう振る舞うか検証できないため，
+# 確実に動作を検証できる自前の分岐にする．
+$url = if ($html.StartsWith('/')) { 'file://' + $html } else { 'file:///' + $html.Replace([char]92, '/') }
 
 Write-Host "chrome : $Pdf"
 $browserArgs = @(
