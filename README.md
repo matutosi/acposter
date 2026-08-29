@@ -30,7 +30,8 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル
 | ファイル | 内容 |
 |---|---|
 | [`examples/poster_howto.md`](examples/poster_howto.md) | ツール自身の機能 (箱・`layout:`・`{.full}`・`::: row`・画像救済) を1つずつ実演する．[ggposter の howto サンプル](https://github.com/matutosi/ggposter/blob/main/inst/extdata/poster_sample_howto.yml) を参考にした |
-| [`examples/poster_howto2.md`](examples/poster_howto2.md) | 「入力 (md) → 出力」の早見表。`layout:` でページ全体を2段組にし，左列に入力例の箱・右列に出力例の箱を対にして並べる。レイアウトの2箱だけは単独行 (全幅) で，箱の中で上下に入力・出力を並べる |
+| [`examples/poster_howto2.md`](examples/poster_howto2.md) | 「入力 (md) → 出力」の早見表。`layout:` でページ全体を2段組にし，左列に入力例の箱・右列に出力例の箱を対にして並べる (ヘッダー・箇条書き・表・図・レイアウト2段/1段の6対) |
+| [`examples/poster_howto3.md`](examples/poster_howto3.md) | **非対称な配置**の例。`grid:` の座標指定で3列にし，右に縦3行またがりの箱，下に全幅の箱を置く。`layout:` (行列) と `grid:` (座標) の書き分けを解説する |
 | [`examples/golf_course.md`](examples/golf_course.md) | 架空の研究データ (草地性種) を使った，見本に近い実例。`layout:` で非対称配置を再現する |
 
 いずれも `pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<ファイル>` で

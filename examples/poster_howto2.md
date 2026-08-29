@@ -9,8 +9,8 @@ layout:
   - [Bullet list input, Bullet list output]
   - [Table input, Table output]
   - [Figure input, Figure output]
-  - [Layout 2 columns]
-  - [Layout 1 column full width]
+  - [Layout 2 columns input, Layout 2 columns output]
+  - [Layout 1 column input, Layout 1 column output]
 ---
 
 # Header input
@@ -77,10 +77,10 @@ The title band always spans the full width, above every box.
 
 ![Figure example](../images/howto_fig.png)
 
-# Layout 2 columns
+# Layout 2 columns input
 
-**Input (YAML header)** — no `layout:` key, so boxes flow newspaper-style
-(left column top to bottom, then the right column).
+No `layout:` key, so boxes flow newspaper-style (left column top to bottom,
+then the right column).
 
 ```
 ---
@@ -94,9 +94,11 @@ title: "..."
 ...
 ```
 
-**Output** — boxes fill the left column first, then the right column.
+# Layout 2 columns output
 
-<div style="display:flex; gap:0.6em; max-width:60%; margin:0.3em auto 0;">
+Boxes fill the left column first, then the right column.
+
+<div style="display:flex; gap:0.6em; margin:0.3em 0 0;">
 <div style="flex:1; display:flex; flex-direction:column; gap:0.4em;">
 <div style="border:0.12em solid var(--box-color); border-radius:0.5em; padding:0.4em; text-align:center;">A</div>
 <div style="border:0.12em solid var(--box-color); border-radius:0.5em; padding:0.4em; text-align:center;">B</div>
@@ -106,23 +108,24 @@ title: "..."
 </div>
 </div>
 
-# Layout 1 column full width
+# Layout 1 column input
 
-**Input** — add `{.full}` right after the heading text (only used when
-`layout:` is absent; with `layout:`, a single-item row is already full width).
+Add `{.full}` right after the heading text (only used when `layout:` is
+absent; with `layout:`, a single-item row is already full width).
 
 ```
 # BOX D {.full}
 ...
 ```
 
-**Output** — that one box spans the full width, breaking out of the
-2-column flow (used for wide tables or a summary that should not be split).
+# Layout 1 column output
 
-<div style="max-width:60%; margin:0.3em auto 0;">
+That one box spans the full width, breaking out of the 2-column flow
+(used for wide tables or a summary that should not be split).
+
+<div style="margin:0.3em 0 0;">
 <div style="border:0.12em solid var(--box-color); border-radius:0.5em; padding:0.4em; text-align:center;">D (full width)</div>
 </div>
 
-For an explicit, non-newspaper arrangement (e.g. matching an irregular
-sample layout, or this very page's input/output pairing), use the
-`layout:` header key — see `../golf_course.md` for another example.
+For an irregular arrangement, use `layout:` (a matrix of headings) or
+`grid:` (`x`/`y`/`w`/`h` per box) — see `../golf_course.md`.

@@ -164,7 +164,7 @@ html { font-size: 26pt; }
 See poster_howto.md for a feature tour instead.</p>
 </div>
 </section>
-<div class="content grid" style="display:grid; grid-template-columns: repeat(2, 1fr); grid-template-areas: &quot;header-input header-output&quot; &quot;bullet-list-input bullet-list-output&quot; &quot;table-input table-output&quot; &quot;figure-input figure-output&quot; &quot;layout-2-columns layout-2-columns&quot; &quot;layout-1-column-full-width layout-1-column-full-width&quot;;">
+<div class="content grid" style="display:grid; grid-template-columns: repeat(2, 1fr); grid-template-areas: &quot;header-input header-output&quot; &quot;bullet-list-input bullet-list-output&quot; &quot;table-input table-output&quot; &quot;figure-input figure-output&quot; &quot;layout-2-columns-input layout-2-columns-output&quot; &quot;layout-1-column-input layout-1-column-output&quot;;">
 <div class="box" style="grid-area: header-input;">
 <div class="box-title">
 Header input
@@ -282,14 +282,13 @@ Figure output
 </div>
 </div>
 </div>
-<div class="box" style="grid-area: layout-2-columns;">
+<div class="box" style="grid-area: layout-2-columns-input;">
 <div class="box-title">
-Layout 2 columns
+Layout 2 columns input
 </div>
 <div class="box-body">
-<p><strong>Input (YAML header)</strong> — no <code>layout:</code> key,
-so boxes flow newspaper-style(left column top to bottom, then the right
-column).</p>
+<p>No <code>layout:</code> key, so boxes flow newspaper-style (left
+column top to bottom,then the right column).</p>
 <pre><code>---
 title: &quot;...&quot;
 ---
@@ -299,9 +298,15 @@ title: &quot;...&quot;
 ...
 # BOX C
 ...</code></pre>
-<p><strong>Output</strong> — boxes fill the left column first, then the
-right column.</p>
-<div style="display:flex; gap:0.6em; max-width:60%; margin:0.3em auto 0;">
+</div>
+</div>
+<div class="box" style="grid-area: layout-2-columns-output;">
+<div class="box-title">
+Layout 2 columns output
+</div>
+<div class="box-body">
+<p>Boxes fill the left column first, then the right column.</p>
+<div style="display:flex; gap:0.6em; margin:0.3em 0 0;">
 <div style="flex:1; display:flex; flex-direction:column; gap:0.4em;">
 <div style="border:0.12em solid var(--box-color); border-radius:0.5em; padding:0.4em; text-align:center;">
 A
@@ -318,28 +323,34 @@ C
 </div>
 </div>
 </div>
-<div class="box" style="grid-area: layout-1-column-full-width;">
+<div class="box" style="grid-area: layout-1-column-input;">
 <div class="box-title">
-Layout 1 column full width
+Layout 1 column input
 </div>
 <div class="box-body">
-<p><strong>Input</strong> — add <code>{.full}</code> right after the
-heading text (only used when<code>layout:</code> is absent; with
-<code>layout:</code>, a single-item row is already full width).</p>
+<p>Add <code>{.full}</code> right after the heading text (only used when
+<code>layout:</code> isabsent; with <code>layout:</code>, a single-item
+row is already full width).</p>
 <pre><code># BOX D {.full}
 ...</code></pre>
-<p><strong>Output</strong> — that one box spans the full width, breaking
-out of the2-column flow (used for wide tables or a summary that should
-not be split).</p>
-<div style="max-width:60%; margin:0.3em auto 0;">
+</div>
+</div>
+<div class="box" style="grid-area: layout-1-column-output;">
+<div class="box-title">
+Layout 1 column output
+</div>
+<div class="box-body">
+<p>That one box spans the full width, breaking out of the 2-column
+flow(used for wide tables or a summary that should not be split).</p>
+<div style="margin:0.3em 0 0;">
 <div style="border:0.12em solid var(--box-color); border-radius:0.5em; padding:0.4em; text-align:center;">
 D (full width)
 </div>
 </div>
-<p>For an explicit, non-newspaper arrangement (e.g. matching an
-irregularsample layout, or this very page’s input/output pairing), use
-the<code>layout:</code> header key — see <code>../golf_course.md</code>
-for another example.</p>
+<p>For an irregular arrangement, use <code>layout:</code> (a matrix of
+headings) or<code>grid:</code>
+(<code>x</code>/<code>y</code>/<code>w</code>/<code>h</code> per box) —
+see <code>../golf_course.md</code>.</p>
 </div>
 </div>
 </div>

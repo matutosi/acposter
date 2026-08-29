@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Row spans, column spans, and the two ways to write them" />
+  <title>build-poster-pdf: irregular layouts</title>
+  <style>
+
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+@page {
+size: 841mm 1189mm; 
+margin: 12mm;
+}
+:root {
+--box-color: #1a7a3c; 
+--title-bg: #1a7a3c;
+--content-columns: 2; 
+}
+html { font-size: 32pt; } 
+body {
+
+font-family: "UD デジタル 教科書体 N", "UD Digi Kyokasho N",
+"BIZ UDPGothic", "Yu Gothic UI",
+"Hiragino Sans", "Hiragino Kaku Gothic ProN",
+"Noto Sans CJK JP", "Noto Sans JP", "IPAGothic", "TakaoPGothic",
+sans-serif;
+line-height: 1.3;
+margin: 0;
+color: #111;
+box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: border-box; }
+
+#title-block-header { display: none; }
+img { max-width: 100%; }
+
+.title-band {
+background: var(--title-bg);
+color: #fff;
+text-align: center;
+border-radius: 0.5em;
+padding: 0.7em 1.5em 0.9em;
+margin: 0 0 0.8em;
+}
+.title-band h1 { margin: 0 0 0.35em; font-size: 2em; font-weight: bold; line-height: 1.25; }
+.title-band .byline { font-size: 1.05em; }
+.title-band .note { font-size: 0.6em; opacity: 0.9; margin-top: 0.35em; }
+.title-band p { margin: 0; }
+
+.content.flow {
+column-count: var(--content-columns);
+column-gap: 1.2em;
+}
+.content.grid { gap: 0.8em; }
+
+.box {
+border: 0.15em solid var(--box-color);
+border-radius: 0.9em;
+padding: 1.4em 1em 1em;
+margin: 0 0 0.9em;
+background: #fff;
+break-inside: avoid;
+page-break-inside: avoid;
+}
+
+.content.grid > .box { margin: 0; }
+.box-title {
+display: inline-block;
+background: var(--box-color);
+color: #fff;
+font-weight: bold;
+font-size: 1.2em;
+line-height: 1.3;
+border-radius: 0.6em;
+padding: 0.25em 1em;
+margin: -1.4em 0 0.6em -0.35em;
+}
+.box-body > *:last-child { margin-bottom: 0; }
+
+.box.full { column-span: all; }
+
+:root { --fig-max-h: 13vh; }
+.fig { margin: 0.4em 0; text-align: center; }
+.fig img {
+max-width: 100%;
+max-height: var(--fig-max-h);
+height: auto;
+border: 1px solid #ccc;
+display: inline-block;
+object-fit: contain;
+}
+
+.row { display: flex; gap: 0.6em; flex-wrap: wrap; margin: 0.4em 0; }
+.row img, .row .fig { flex: 1 1 0; min-width: 0; margin: 0; }
+
+p { margin: 0 0 0.5em; }
+ul { margin: 0 0 0.4em; padding-left: 1.1em; list-style: none; }
+li { text-indent: -1.1em; padding-left: 1.1em; margin-bottom: 0.2em; }
+li::before { content: "・"; color: var(--box-color); display: inline-block; width: 1.1em; text-indent: 0; }
+li ul { margin-top: 0.15em; font-size: 0.9em; }
+li li::before { content: "-"; }
+strong { font-weight: bold; color: #b03000; }
+.small { font-size: 0.75em; }
+.xsmall { font-size: 0.6em; }
+
+code { font-family: "Consolas", "Menlo", monospace; font-size: 0.9em; background: #f2f2f2; padding: 0 0.2em; }
+pre {
+background: #f4f4f4;
+border: 1px solid #ccc;
+border-radius: 0.5em;
+padding: 0.5em 0.7em;
+font-size: 0.7em;
+line-height: 1.35;
+white-space: pre-wrap;
+word-break: break-word;
+margin: 0.3em 0 0.5em;
+}
+pre code { background: none; padding: 0; font-size: 1em; }
+table {
+border-collapse: collapse;
+font-size: 0.72em;
+width: 100%;
+margin: 0.4em 0;
+}
+th, td { border: 1px solid #999; padding: 0.2em 0.5em; }
+th { background: #eaf3ea; font-weight: bold; }
+caption { caption-side: top; text-align: left; font-size: 0.85em; margin-bottom: 0.2em; }
+</style>
+  <style>
+@page { size: 841mm 1189mm; }
+html { font-size: 26pt; }
+:root { --content-columns: 2; }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">build-poster-pdf: irregular layouts</h1>
+<p class="author">Row spans, column spans, and the two ways to write
+them</p>
+</header>
+<section class="title-band">
+<h1>build-poster-pdf: irregular layouts</h1>
+<div class="byline">
+<p>Row spans, column spans, and the two ways to write
+them(build-poster-pdf)</p>
+</div>
+<div class="note">
+<p>This page is itself an irregular layout. The grid: header below
+places every box by coordinate, including the tall box on the right and
+the wide boxes at the bottom.</p>
+</div>
+</section>
+<div class="content grid" style="display:grid; grid-template-columns: repeat(3, 1fr);">
+<div class="box" style="grid-column: 1 / span 2; grid-row: 1 / span 1;">
+<div class="box-title">
+The two notations
+</div>
+<div class="box-body">
+<p>Both <code>layout:</code> and <code>grid:</code> place boxes on a CSS
+Grid. They differ only in<strong>how you write the same
+arrangement</strong>.</p>
+<ul>
+<li><code>layout:</code> — a <strong>matrix of heading names</strong>,
+written to look like the page.</li>
+<li><code>grid:</code> — an
+<strong><code>x</code>/<code>y</code>/<code>w</code>/<code>h</code>
+coordinate per box</strong>, like a dashboard library.</li>
+</ul>
+<p><code>grid:</code> wins if you write both.</p>
+</div>
+</div>
+<div class="box" style="grid-column: 3 / span 1; grid-row: 1 / span 3;">
+<div class="box-title">
+A tall box
+</div>
+<div class="box-body">
+<p>This box is <code>h: 3</code>, so it spans <strong>three
+rows</strong> — it stays beside the threeboxes on its left instead of
+being cut into pieces.</p>
+<p>A tall box is the usual home for the one thing that needs the most
+room:a large results table, an ordination plot, or a long species
+list.</p>
+<p>Because a box grows to fit its contents, a tall box does
+<strong>not</strong> stretchits neighbours. The row heights come from
+whatever is tallest in that row.</p>
+<ul>
+<li><code>h: 2</code> — spans two rows</li>
+<li><code>h: 3</code> — spans three rows (this box)</li>
+<li><code>w: 2</code> — spans two columns (see the boxes below)</li>
+</ul>
+</div>
+</div>
+<div class="box" style="grid-column: 1 / span 1; grid-row: 2 / span 1;">
+<div class="box-title">
+The layout matrix
+</div>
+<div class="box-body">
+<p>Repeat a name on several rows to span them.</p>
+<pre><code>layout:
+  - [INTRO, INTRO, TALL]
+  - [A, B, TALL]
+  - [WIDE, WIDE, TALL]</code></pre>
+<p><code>TALL</code> appears on all three rows, so it becomes one box
+three rows high.<code>INTRO</code> and <code>WIDE</code> each appear
+twice on one row, so they are two columns wide.</p>
+<p><strong>The shape of the text is the shape of the page</strong>,
+which is the point ofthis notation.</p>
+</div>
+</div>
+<div class="box" style="grid-column: 2 / span 1; grid-row: 2 / span 1;">
+<div class="box-title">
+The grid coordinates
+</div>
+<div class="box-body">
+<p>Give each box a position and a size.</p>
+<pre><code>grid:
+  columns: 3
+  boxes:
+    - {name: INTRO, x: 0, y: 0, w: 2}
+    - {name: TALL,  x: 2, y: 0, h: 3}
+    - {name: A,     x: 0, y: 1}
+    - {name: B,     x: 1, y: 1}
+    - {name: WIDE,  x: 0, y: 2, w: 2}</code></pre>
+<p><code>x</code>/<code>y</code> count from <strong>0</strong> at the
+top left. <code>w</code>/<code>h</code> default to <code>1</code>.The
+same arrangement as the matrix on the left, written once per box.</p>
+</div>
+</div>
+<div class="box" style="grid-column: 1 / span 2; grid-row: 3 / span 1;">
+<div class="box-title">
+Which one to use
+</div>
+<div class="box-body">
+<p>Neither is better; they trade off against each other.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th></th>
+<th><code>layout:</code></th>
+<th><code>grid:</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reads like the page</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>Spanning box</td>
+<td>repeat the name</td>
+<td><code>w:</code> / <code>h:</code> once</td>
+</tr>
+<tr>
+<td>Editing one box</td>
+<td>retype every affected row</td>
+<td>change that box’s numbers</td>
+</tr>
+<tr>
+<td>Many irregular boxes</td>
+<td>matrix gets noisy</td>
+<td>stays compact</td>
+</tr>
+</tbody>
+</table>
+<p>A rule of thumb: <strong>start with <code>layout:</code></strong>,
+and switch to <code>grid:</code> when therepeated names start getting in
+the way.</p>
+</div>
+</div>
+<div class="box" style="grid-column: 1 / span 3; grid-row: 4 / span 1;">
+<div class="box-title">
+What gets checked
+</div>
+<div class="box-body">
+<p>A wrong arrangement is caught before the PDF is written, so a broken
+posternever reaches the printer quietly.</p>
+<ul>
+<li><strong>Overlap</strong> — two boxes on the same cell are named in
+the error.</li>
+<li><strong>Overflow</strong> — a box whose <code>x + w</code> passes
+<code>columns</code> is named.</li>
+<li><strong>Missing</strong> — a heading in the body but not in
+<code>grid:</code>/<code>layout:</code> (or thereverse) stops the
+build.</li>
+<li><strong>Page count</strong> — the build reports the page count; a
+poster is always <code>1</code>,so a <code>2</code> means something
+overflowed the paper.</li>
+</ul>
+<p>The last one is a warning rather than an error, because the PDF is
+stillworth looking at to see <em>what</em> overflowed.</p>
+</div>
+</div>
+<div class="box" style="grid-column: 1 / span 3; grid-row: 5 / span 1;">
+<div class="box-title">
+This very page
+</div>
+<div class="box-body">
+<p>The header of this file uses <code>grid:</code> with
+<code>columns: 3</code>. The box you arereading is <code>w: 3</code>
+(full width), the tall box on the right is <code>h: 3</code>, andthe two
+notation boxes sit side by side in the middle row.</p>
+<p>Compare with <code>poster_howto.md</code> (a tour of the features),
+<code>poster_howto2.md</code>(input and output side by side), and
+<code>golf_course.md</code> (a realistic posterthat uses the
+<code>layout:</code> matrix).</p>
+</div>
+</div>
+</div>
+</body>
+</html>

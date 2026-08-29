@@ -36,6 +36,12 @@ jobs:
           pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
             -Md examples/poster_howto2.md -FontSize 26pt -Pdf $env:RUNNER_TEMP/poster_howto2.pdf -KeepHtml
 
+      - name: Build poster_howto3 example
+        shell: pwsh
+        run: |
+          pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
+            -Md examples/poster_howto3.md -FontSize 26pt -Pdf $env:RUNNER_TEMP/poster_howto3.pdf -KeepHtml
+
       - name: Build golf_course example
         shell: pwsh
         run: |
@@ -67,6 +73,7 @@ jobs:
           }
           check "$RUNNER_TEMP/poster_howto.pdf" "How to Make an Academic Poster"
           check "$RUNNER_TEMP/poster_howto2.pdf" "input to output"
+          check "$RUNNER_TEMP/poster_howto3.pdf" "irregular layouts"
           check "$RUNNER_TEMP/golf_course.pdf" "grassland species richness"
 
       # -KeepHtml は md と同じ場所 (examples/) に <基幹名>.tmp.html を残す仕様なので，
