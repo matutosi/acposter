@@ -1,0 +1,6 @@
+# pandoc が作る中間 HTML (build-poster-pdf の生成物)
+*.tmp.html
+
+# OS
+Thumbs.db
+.DS_Store
