@@ -36,6 +36,32 @@ jobs:
           pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
             -Md examples/golf_course.md -FontSize 22pt -Pdf $env:RUNNER_TEMP/golf_course.pdf -KeepHtml
 
+      # ページ数・箱数・フォント名の検算は「形」しか見ておらず，PDF の中身が
+      # 別物 (例: file:// URL が壊れて Chrome の新規タブページが印刷される) でも
+      # 検出できなかった実例がある (2026-08-29)．pdftotext で実際のテキストを
+      # 抜き出し，見本ごとの既知の文字列が入っているかを機械的に確かめる．
+      - name: Verify PDF content (not just page/box count)
+        shell: bash
+        run: |
+          set -e
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            if [ "$RUNNER_OS" = "macOS" ]; then
+              brew install poppler
+            else
+              sudo apt-get update -y && sudo apt-get install -y poppler-utils
+            fi
+          fi
+          check() {
+            local pdf="$1" needle="$2"
+            if ! pdftotext "$pdf" - | grep -qF "$needle"; then
+              echo "::error::$pdf に期待した文字列が無い: $needle (file:// URL が壊れて別ページが印刷されていないか確かめる)"
+              exit 1
+            fi
+            echo "OK: $pdf に '$needle' を確認"
+          }
+          check "$RUNNER_TEMP/poster_howto.pdf" "How to Make an Academic Poster"
+          check "$RUNNER_TEMP/golf_course.pdf" "grassland species richness"
+
       # -KeepHtml は md と同じ場所 (examples/) に <基幹名>.tmp.html を残す仕様なので，
       # PDF (runner.temp) と一緒にダウンロードできるよう1か所に集める．
       - name: Collect intermediate HTML
