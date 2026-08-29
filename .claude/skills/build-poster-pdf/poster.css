@@ -83,14 +83,29 @@ img { max-width: 100%; }
 /* 段組みの途中でも全幅にしたい箱: `# 見出し {.full}` */
 .box.full { column-span: all; }
 
-/* --- 画像 --------------------------------------------------------------- */
+/* --- 画像 -----------------------------------------------------------------
+   高さの上限 (--fig-max-h) を画面高さの割合で決めておく．箱は中身に応じて
+   自然に伸びる設計 (固定 height なし) なので，これが無いと大きな画像1枚だけで
+   箱が伸びきり，後続の箱がページからあふれる (2026-08-29 のフルコンテンツ検証で確認)．
+   意図して大きく見せたい画像は，箱ごとに `--fig-max-h` を上書きするか，
+   見出しに `{.full}` を付けて全幅の箱に逃がす． */
+:root { --fig-max-h: 16vh; }
 .fig { margin: 0.4em 0; text-align: center; }
-.fig img { max-width: 100%; height: auto; border: 1px solid #ccc; display: inline-block; }
+.fig img {
+  max-width: 100%;
+  max-height: var(--fig-max-h);
+  height: auto;
+  border: 1px solid #ccc;
+  display: inline-block;
+  object-fit: contain;
+}
 
-/* 画像を横に並べたいとき: `::: row` … `:::` で囲む */
+/* 画像を横に並べたいとき: `::: row` … `:::` で囲む．
+   img に width:100% を明示すると，height:auto + max-height の縮小が効かなくなる
+   (width が非 auto だと，両方 auto のときだけ働く「縦横とも制約に収める」計算に
+   ならない．2026-08-29 のフルコンテンツ検証で発見．width は指定しないままにする)． */
 .row { display: flex; gap: 0.6em; flex-wrap: wrap; margin: 0.4em 0; }
 .row img, .row .fig { flex: 1 1 0; min-width: 0; margin: 0; }
-.row .fig img { width: 100%; }
 
 /* --- 本文の要素 ----------------------------------------------------------- */
 p { margin: 0 0 0.5em; }

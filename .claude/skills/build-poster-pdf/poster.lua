@@ -98,6 +98,21 @@ local function para_class(blk)
   return blk
 end
 
+-- 箱の中身を順に処理する．Div (`::: row` など) の中も再帰して見る必要がある。
+-- そうしないと `::: row` の中の画像段落が div.fig に包まれず，max-height が効かない
+-- (2026-08-29 のフルコンテンツ検証で発見)．
+local function process_blocks(blocks)
+  local out = {}
+  for _, b in ipairs(blocks) do
+    if b.t == 'Div' then
+      out[#out + 1] = pandoc.Div(process_blocks(b.content), b.attr)
+    else
+      out[#out + 1] = para_class(b)
+    end
+  end
+  return out
+end
+
 local IMAGE_EXT = { png = true, jpg = true, jpeg = true, gif = true, svg = true, webp = true }
 
 -- `[メモ](filename.png)` のような書き間違い (画像記法 `![...]` の付け忘れ) を画像として救済する
@@ -195,8 +210,7 @@ function Pandoc(doc)
   -- 箱を組み立てる
   local content_blocks = {}
   for _, bx in ipairs(boxes) do
-    local body = {}
-    for _, b in ipairs(bx.blocks) do body[#body + 1] = para_class(b) end
+    local body = process_blocks(bx.blocks)
     local classes = { 'box' }
     if bx.full then classes[#classes + 1] = 'full' end
     local keyvals = {}

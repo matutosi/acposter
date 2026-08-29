@@ -1,5 +1,7 @@
-# pandoc が作る中間 HTML (build-poster-pdf の生成物)
+# pandoc が作る中間 HTML (build-poster-pdf の生成物)．
+# ただし examples/ の2つの見本は，体裁確認用にあえて残して版管理する (2026-08-29 ユーザ指示)．
 *.tmp.html
+!examples/*.tmp.html
 
 # OS
 Thumbs.db
