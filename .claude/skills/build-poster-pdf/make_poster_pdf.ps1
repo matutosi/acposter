@@ -229,6 +229,12 @@ $proc = Start-Process -FilePath $browser -ArgumentList $browserArgs -NoNewWindow
   -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
 if (-not $proc.WaitForExit(120000)) {
   try { $proc.Kill() } catch {}
+  # 打ち切る前に，Chrome がそれまでに吐いていたログを表示する (原因調査のため．
+  # 2026-08-29，最初のハングでは何も出力できず原因が分からなかった)．
+  Write-Host '--- chrome stdout (timeout) ---'
+  Get-Content -LiteralPath $stdoutLog -ErrorAction SilentlyContinue | Write-Host
+  Write-Host '--- chrome stderr (timeout) ---'
+  Get-Content -LiteralPath $stderrLog -ErrorAction SilentlyContinue | Write-Host
   Remove-Item $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
   throw 'Chrome の印刷が120秒以内に終わらなかった (ハングした可能性)．'
 }
