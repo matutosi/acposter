@@ -185,6 +185,14 @@ function Pandoc(doc)
     return math.floor(n)
   end
 
+  -- 両方書いてあるときは `grid:` を使うが，**黙って無視すると書き間違いに気づけない**
+  -- ので警告する (2026-08-30 に追加．エラーにはしない．どちらか一方を消せば消える)．
+  if grid_meta and is_map(grid_meta) and layout_meta and is_list(layout_meta) then
+    io.stderr:write(
+      '[warning] ヘッダーに grid: と layout: の両方がある．grid: (座標指定) を使い，' ..
+      'layout: (見出しの行列) は無視する．使わないほうを消す．\n')
+  end
+
   if grid_meta and is_map(grid_meta) then
     -- --- 1. 座標指定 (gridstack.js 風の x/y/w/h) -----------------------------
     local cols = to_num(grid_meta.columns, 2)

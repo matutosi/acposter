@@ -70,7 +70,14 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-30 (このセッション，x280-home) その7
+- 2026-08-30 (このセッション，x280-home) その8
+  **`grid:` と `layout:` を両方書いたときに警告を出すようにした** (ユーザの指摘)．
+  それまでは `grid:` が黙って優先され，`layout:` は何も言わずに捨てられていたので，
+  書き間違い (消し忘れ・書き換え途中) に気づけなかった．
+  エラーではなく警告にとどめる (PDF は `grid:` で正しく組まれる)．
+  使わないほうを消せば警告も消える．SKILL.md にも明記した．
+
+- 2026-08-30 (x280-home) その7
   **`poster_howto2.md` の全項目を「左=入力・右=出力」に揃え，4本目の見本
   `poster_howto3.md` (非対称な配置) を作った** (ユーザ指示)．
   howto2 はレイアウトの2項目だけ箱の中で上下に積んでいたのを，他の4項目と同じく
@@ -95,15 +102,6 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
   **実装中に踏んだ罠**: `pandoc.utils.type()` は MetaMap に対して `'Map'` ではなく
   **`'table'` を返す**．`'Map'` で判定すると常に false になり，`grid:` が黙って無視されて
   既定の流し込みに落ちる (PDF はできてしまうので気づきにくい)．
-
-- 2026-08-30 (x280-home) その5
-  **`poster.pdf` (実在の研究者名を含む見本) を，過去のコミットも含めて履歴ごと削除した**
-  (ユーザ指示．「無理なら最新版だけでも」との条件だったが，`git filter-repo`
-  (`pip install git-filter-repo`) で**全18コミットから完全に除けた**)．
-  手順: `git filter-repo --path poster.pdf --invert-paths --force` →
-  (filter-repo が安全のため自動で外す) `origin` を再設定 → `.gitignore` に追加 →
-  `git push --force-with-lease` で全面書き換え．**force push は今回の指示の範囲内**．
-  作業ツリーの `poster.pdf` 自体も消える (履歴と一緒に消えるのが filter-repo の仕様)．
 
 - それ以前は [notes/history.md](notes/history.md) を見る．
 

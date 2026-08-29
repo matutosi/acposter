@@ -4,6 +4,17 @@
 
 ## 2026-08-30
 
+- 2026-08-30 (x280-home) その5
+  **`poster.pdf` (実在の研究者名を含む見本) を，過去のコミットも含めて履歴ごと削除した**
+  (ユーザ指示．「無理なら最新版だけでも」との条件だったが，`git filter-repo`
+  (`pip install git-filter-repo`) で**全18コミットから完全に除けた**)．
+  手順: `git filter-repo --path poster.pdf --invert-paths --force` →
+  (filter-repo が安全のため自動で外す) `origin` を再設定 → `.gitignore` に追加 →
+  force push で全面書き換え．**force push は今回の指示の範囲内**．
+  作業ツリーの `poster.pdf` 自体も消える (履歴と一緒に消えるのが filter-repo の仕様)．
+  なお filter-repo の後は **upstream の追跡設定も外れる**ので，
+  次の push で `--set-upstream` を付け直す必要がある．
+
 - 2026-08-30 (x280-home) その4
   **3本目の見本 `examples/poster_howto2.md` (入力→出力の早見表) を作成した** (ユーザ指示)．
   最初は箱の中を `::: cols` で2分割する案で作ったが，**ユーザから「ページ全体の2段組で，
