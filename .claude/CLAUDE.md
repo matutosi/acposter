@@ -5,7 +5,9 @@ LaTeX を使わず，pandoc + ヘッドレス Chrome で組む．既存の R/ggp
 (`../ggposter/.claude/CLAUDE.md`) とは別系統 (置き換えではない)．
 
 - 親の管理は [todo/.claude/CLAUDE.md](../../.claude/CLAUDE.md)．**進捗はここが正**．
-- `poster.pdf` は **見本** (ggposter の出力例と同じもの)．体裁の目標として置いてある．
+- `poster.pdf` (ggposter の出力例と同じ見本) は**実在の研究者名を含むため，
+  2026-08-30 にユーザ指示で `git filter-repo` により履歴ごとリポジトリから除いた**
+  (`.gitignore` に追加済み．手元に置きたいときはこのファイル名のまま置いてよい)．
 
 ## 構成
 
@@ -66,7 +68,16 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-30 (このセッション，x280-home) その4
+- 2026-08-30 (このセッション，x280-home) その5
+  **`poster.pdf` (実在の研究者名を含む見本) を，過去のコミットも含めて履歴ごと削除した**
+  (ユーザ指示．「無理なら最新版だけでも」との条件だったが，`git filter-repo`
+  (`pip install git-filter-repo`) で**全18コミットから完全に除けた**)．
+  手順: `git filter-repo --path poster.pdf --invert-paths --force` →
+  (filter-repo が安全のため自動で外す) `origin` を再設定 → `.gitignore` に追加 →
+  `git push --force-with-lease` で全面書き換え．**force push は今回の指示の範囲内**．
+  作業ツリーの `poster.pdf` 自体も消える (履歴と一緒に消えるのが filter-repo の仕様)．
+
+- 2026-08-30 (x280-home) その4
   **3本目の見本 `examples/poster_howto2.md` (入力→出力の早見表) を作成した** (ユーザ指示)．
   最初は箱の中を `::: cols` で2分割する案で作ったが，**ユーザから「ページ全体の2段組で，
   左列に入力・右列に出力」という指摘を受けて作り直した**: `layout:` でヘッダー・箇条書き・
@@ -83,14 +94,6 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
   謝辞 (`note`) も実在の科研費番号を含んでいたので，「これはデモであり実在の
   研究ではない」旨の断り書きに変えた．`poster_howto.md` はもともと実名を
   使っていないので変更なし．
-
-- 2026-08-30 (x280-home) その2
-  **見本 `poster.pdf` より文字が小さいとの指摘を受け，`examples/` の文字を大きくした**．
-  既定の基準フォント (A0) を 26pt→32pt，A1 を 18pt→23pt に上げた．
-  `poster_howto.md` はこれで1ページに収まるが，`golf_course.md` は内容が多く
-  32pt では2ページにあふれたため，**箱の余白・段間隔・行間・画像の高さ上限を
-  少し詰めて** 26pt (旧 22pt から実質+18%) まで上げても1ページに収まるようにした．
-  README・CI ワークフローの `-FontSize` 指定も 22pt→26pt に合わせて更新．
 
 - それ以前は [notes/history.md](notes/history.md) を見る．
 

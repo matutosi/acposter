@@ -3,6 +3,10 @@
 *.tmp.html
 !examples/*.tmp.html
 
+# 見本 PDF (実在の研究者名を含むため，2026-08-30 にユーザ指示で履歴ごと除いた．
+# 追跡対象外にしておく．手元に置きたいときはこのファイル名のまま置いてよい)
+/poster.pdf
+
 # OS
 Thumbs.db
 .DS_Store
