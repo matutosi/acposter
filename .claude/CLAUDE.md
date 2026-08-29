@@ -53,7 +53,13 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-29 09:30 (このセッション，MATUTOSI_DP)
+- 2026-08-29 09:40 (このセッション，MATUTOSI_DP)
+  **`layout:` (CSS Grid モード) を検証した (`test_layout.md` → `test_layout.pdf`)**．
+  `[OBJECTIVES, CONCLUSIONS]` / `[BACKGROUNDS, RESULTS]` / `[METHODS, RESULTS]` / `[SUMMARY]`
+  の指定どおり，RESULTS が2行にまたがる縦長の箱に，SUMMARY が全幅の箱になった．検算も一致．
+  **未コミット** (このセッションの続きでコミットするか確認してから)．
+
+- 2026-08-29 09:30 (MATUTOSI_DP)
   **`build-poster-pdf` を `acposter` 専用のプロジェクトスキルへ移した**
   (`.claude/skills/build-poster-pdf/`．旧置き場所 `todo/.claude/user/skills/` は未コミットの
   ままだったので移動のみで済んだ)．**指示があるまでは**ユーザースキル (3台共有) へは上げない．
@@ -72,8 +78,9 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 次にやること
 
-1. `layout:` (CSS Grid モード) は今回のテストでは検証していない (既定の流し込みのみ確認済み)．
-   見本 `poster.pdf` に近い非対称配置を試すときに検証する．
-2. 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
+1. **【判断待ち】** `test.md`・`test_layout.md`・生成 PDF が未コミット．commit/push するか確認する．
+2. 見本 `poster.pdf` そのものに近い内容 (実際の見出し・画像・表) で1本通して試していない
+   (ここまでは簡略化したテスト内容のみ)．やるならその検証を次に．
+3. 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
    `~/.claude/skills/build-poster-pdf/` (3台共有のユーザースキル) へ引き上げる．
    それまではこの `acposter/.claude/skills/build-poster-pdf/` のままでよい．
