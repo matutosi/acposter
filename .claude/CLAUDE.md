@@ -62,7 +62,15 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-30 (このセッション，x280-home) その2
+- 2026-08-30 (このセッション，x280-home) その3
+  **`golf_course.md` の氏名・所属を架空のものに差し替えた** (ユーザ指示)．
+  見本 `poster.pdf` の実在の研究者名・所属をそのまま流用していたのを，
+  `Jane Doe`/`Taro Yamada`/`Hanako Sato` と `Example ...` の所属名に変更．
+  謝辞 (`note`) も実在の科研費番号を含んでいたので，「これはデモであり実在の
+  研究ではない」旨の断り書きに変えた．`poster_howto.md` はもともと実名を
+  使っていないので変更なし．
+
+- 2026-08-30 (x280-home) その2
   **見本 `poster.pdf` より文字が小さいとの指摘を受け，`examples/` の文字を大きくした**．
   既定の基準フォント (A0) を 26pt→32pt，A1 を 18pt→23pt に上げた．
   `poster_howto.md` はこれで1ページに収まるが，`golf_course.md` は内容が多く

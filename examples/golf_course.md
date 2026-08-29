@@ -1,9 +1,9 @@
 ---
 title: "The relationship between grassland species richness and the management in long-established golf courses in Japan"
-author: ["Toshikazu Matsumura", "Yoshinobu Hashimoto", "Yoshihiro Sawada"]
-institute: ["Konan Women's Univ.", "Museum of Nature and Human Activities, Hyogo", "Awaji Landscape Planning & Horticulture Academy / Univ. of Hyogo"]
+author: ["Jane Doe", "Taro Yamada", "Hanako Sato"]
+institute: ["Example Women's Univ.", "Example Museum of Nature and Human Activities", "Example Landscape Planning & Horticulture Academy"]
 type: "学術ポスター"
-note: "※This study was supported by JSPS KAKENHI Grant Number 15K07833. We wish to thank the golf courses for field investigations."
+note: "※This is a demonstration poster for the build-poster-pdf skill; it does not describe real research. Names, affiliations, and funding are fictional."
 layout:
   - [OBJECTIVES, CONCLUSIONS]
   - [BACKGROUNDS, RESULTS]
