@@ -68,7 +68,9 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
   見本ごとの既知の文字列 (`poster_howto` なら表題，`golf_course` なら本文の一節) が
   入っているかを機械的に確認する．2026-08-29 に見逃した「ページ数・箱数は合っているが
   中身が Chrome の新規タブページ」という不具合を，次からは自動で検出できるようになる．
-  結果はこのあと CI で確認する．
+  **CI (macOS・Ubuntu 両方) で実際に動作し，2見本とも `OK` を確認**．
+  これで acposter の「次にやること」に残っているのは，ユーザースキルへの引き上げ
+  (指示待ち) だけになった．
 
 - 2026-08-29 12:20 (x280-home)
   **Mac/Linux 対応が GitHub Actions で完全に検証できた**．URL 修正後の CI は
@@ -91,19 +93,10 @@ GitHub Actions (`.github/workflows/test.yml`，macos-latest・ubuntu-latest) で
 実際に2つの見本をビルドし，**Artifact の PDF を目視確認するところまで**やって
 Mac/Linux で正しく組めることを確かめた．リポジトリは検証のため Public 化済み．
 
-1. 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
+1. **【判断待ち】** 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
    `~/.claude/skills/build-poster-pdf/` (3台共有のユーザースキル) へ引き上げる．
    それまではこの `acposter/.claude/skills/build-poster-pdf/` のままでよい．
-2. **PDF の中身を機械的に確かめる CI 検算は追加済み** (2026-08-30，`pdftotext`)．
-   結果 (CI が通るか) はこのあと確認する．
-   - **ブラウザ探索が Windows 専用**: `make_poster_pdf.ps1` は
-     `$env:ProgramFiles\Google\Chrome\Application\chrome.exe` のような Windows のパスを
-     決め打ちで探している．Mac/Linux では場所が違うので見つからない．
-   - **フォントが Windows 標準の「UD デジタル教科書体 N」前提**: Mac/Linux には無く，
-     代替フォントへフォールバックするが，見た目は想定どおりにならない．
-   - PowerShell (`pwsh`) 自体は Mac/Linux にも入るので絶対的な障壁ではない．
-   - 対策 (未着手・スコープ外): ブラウザ探索を `Get-Command`/PATH 検索に変える，
-     OS ごとにフォント指定を切り替える．
-   - **同じ設計 (pandoc + ヘッドレス Chrome + PowerShell ラッパー) の
-     `build-abstract-pdf`・`build-slide-pdf` (ユーザースキル側) も同様に Windows 専用**．
-     対応するなら3スキル共通の課題として扱う．
+2. 同じ設計 (pandoc + ヘッドレス Chrome + PowerShell ラッパー) の
+   `build-abstract-pdf`・`build-slide-pdf` (ユーザースキル側) は，今回の
+   Mac/Linux 対応 (ブラウザ探索・フォント・`file://` URL 組み立て) を反映していない．
+   対応するかは指示があってから (3スキル共通の課題として扱う想定)．
