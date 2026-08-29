@@ -28,16 +28,24 @@ jobs:
         shell: pwsh
         run: |
           pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
-            -Md examples/poster_howto.md -Pdf $env:RUNNER_TEMP/poster_howto.pdf
+            -Md examples/poster_howto.md -Pdf $env:RUNNER_TEMP/poster_howto.pdf -KeepHtml
 
       - name: Build golf_course example
         shell: pwsh
         run: |
           pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
-            -Md examples/golf_course.md -FontSize 22pt -Pdf $env:RUNNER_TEMP/golf_course.pdf
+            -Md examples/golf_course.md -FontSize 22pt -Pdf $env:RUNNER_TEMP/golf_course.pdf -KeepHtml
 
-      - name: Upload generated PDFs
+      # -KeepHtml は md と同じ場所 (examples/) に <基幹名>.tmp.html を残す仕様なので，
+      # PDF (runner.temp) と一緒にダウンロードできるよう1か所に集める．
+      - name: Collect intermediate HTML
+        shell: pwsh
+        run: Copy-Item examples/*.tmp.html $env:RUNNER_TEMP/
+
+      - name: Upload generated PDFs and HTML
         uses: actions/upload-artifact@v4
         with:
           name: posters-${{ matrix.os }}
-          path: ${{ runner.temp }}/*.pdf
+          path: |
+            ${{ runner.temp }}/*.pdf
+            ${{ runner.temp }}/*.tmp.html
