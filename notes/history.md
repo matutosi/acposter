@@ -4,6 +4,15 @@
 
 ## 2026-08-29
 
+- 2026-08-29 12:20 (x280-home)
+  **Mac/Linux 対応が GitHub Actions で完全に検証できた**．URL 修正後の CI は
+  macOS・Ubuntu とも成功．**今回は「成功」の報告を鵜呑みにせず**，両 OS の
+  Artifact から実際の PDF をダウンロードして中身を目視確認した．
+  `poster_howto.pdf`・`golf_course.pdf` とも，箱の配置・表・画像・
+  `layout:` の2行またがりまで意図どおり．**Ubuntu は CJK フォントが無いため
+  「・」が □ (tofu) になる**が，これは SKILL.md に書いた既知の制限どおり (想定内)．
+  これで build-poster-pdf の Mac/Linux 対応は完了とみなす．
+
 - 2026-08-29 12:10 (x280-home)
   **CI が「成功」報告していたのに，実は Mac・Linux 両方とも中身が間違っていたことが発覚**．
   Artifact の PDF を実際に開いて見たら，2つの見本とも中身が Chrome の新規タブページ

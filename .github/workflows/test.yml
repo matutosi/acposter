@@ -34,7 +34,7 @@ jobs:
         shell: pwsh
         run: |
           pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
-            -Md examples/golf_course.md -FontSize 22pt -Pdf $env:RUNNER_TEMP/golf_course.pdf -KeepHtml
+            -Md examples/golf_course.md -FontSize 26pt -Pdf $env:RUNNER_TEMP/golf_course.pdf -KeepHtml
 
       # ページ数・箱数・フォント名の検算は「形」しか見ておらず，PDF の中身が
       # 別物 (例: file:// URL が壊れて Chrome の新規タブページが印刷される) でも

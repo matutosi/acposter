@@ -62,7 +62,15 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-30 (このセッション，x280-home)
+- 2026-08-30 (このセッション，x280-home) その2
+  **見本 `poster.pdf` より文字が小さいとの指摘を受け，`examples/` の文字を大きくした**．
+  既定の基準フォント (A0) を 26pt→32pt，A1 を 18pt→23pt に上げた．
+  `poster_howto.md` はこれで1ページに収まるが，`golf_course.md` は内容が多く
+  32pt では2ページにあふれたため，**箱の余白・段間隔・行間・画像の高さ上限を
+  少し詰めて** 26pt (旧 22pt から実質+18%) まで上げても1ページに収まるようにした．
+  README・CI ワークフローの `-FontSize` 指定も 22pt→26pt に合わせて更新．
+
+- 2026-08-30 (x280-home)
   **CI に PDF の中身そのものを確かめる検算を追加した** (「次にやること」の余力項目に着手)．
   `pdftotext` (poppler-utils，無ければ apt/brew で入れる) で実際のテキストを抜き出し，
   見本ごとの既知の文字列 (`poster_howto` なら表題，`golf_course` なら本文の一節) が
@@ -71,15 +79,6 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
   **CI (macOS・Ubuntu 両方) で実際に動作し，2見本とも `OK` を確認**．
   これで acposter の「次にやること」に残っているのは，ユーザースキルへの引き上げ
   (指示待ち) だけになった．
-
-- 2026-08-29 12:20 (x280-home)
-  **Mac/Linux 対応が GitHub Actions で完全に検証できた**．URL 修正後の CI は
-  macOS・Ubuntu とも成功．**今回は「成功」の報告を鵜呑みにせず**，両 OS の
-  Artifact から実際の PDF をダウンロードして中身を目視確認した．
-  `poster_howto.pdf`・`golf_course.pdf` とも，箱の配置・表・画像・
-  `layout:` の2行またがりまで意図どおり．**Ubuntu は CJK フォントが無いため
-  「・」が □ (tofu) になる**が，これは SKILL.md に書いた既知の制限どおり (想定内)．
-  これで build-poster-pdf の Mac/Linux 対応は完了とみなす．
 
 - それ以前は [notes/history.md](notes/history.md) を見る．
 

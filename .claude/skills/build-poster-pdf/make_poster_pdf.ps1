@@ -42,7 +42,7 @@ $SUPPORTED_TYPES = @('学術ポスター', 'ポスター')
 # A系列の縦向き実寸 (mm)．横長は幅高を入れ替える．
 $SIZE_MM = @{ A0 = @{ w = 841; h = 1189 }; A1 = @{ w = 594; h = 841 } }
 # 基準フォントサイズ (pt)．A1 は A0 の 1/√2 相当を丸めた値．
-$FONT_PT = @{ A0 = 26; A1 = 18 }
+$FONT_PT = @{ A0 = 32; A1 = 23 }
 
 function Get-FrontMatter([string]$path) {
   $lines = Get-Content -LiteralPath $path -Encoding UTF8

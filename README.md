@@ -32,7 +32,7 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル
 | [`examples/golf_course.md`](examples/golf_course.md) | 見本 `poster.pdf` (草地性種の実データ) に近い内容．`layout:` で非対称配置を再現する |
 
 いずれも `pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<ファイル>` で
-PDF を作れる (`golf_course.md` は文字がやや大きいので `-FontSize 22pt` を付ける)．
+PDF を作れる (`golf_course.md` は内容が多いので `-FontSize 26pt` を付ける)．
 
 ## 開発の経緯
 
