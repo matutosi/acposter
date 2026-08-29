@@ -3,7 +3,7 @@
 md 原稿から学術ポスター (A0/A1・1枚) の PDF を作るツール，`build-poster-pdf` の
 開発・検証プロジェクト．**LaTeX を使わず**，pandoc + ヘッドレス Chrome で組む．
 
-見本の体裁 ([poster.pdf](poster.pdf)) は，既存の R/ggplot2 製ポスターツール
+体裁の目標にした見本 (研究者の実名を含むため非公開) は，既存の R/ggplot2 製ポスターツール
 [ggposter](https://github.com/matutosi/ggposter) の出力例と同じもの．
 ggposter とは別系統のツールで，どちらを使うかは案件ごとに選べる．
 
@@ -29,7 +29,8 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル
 | ファイル | 内容 |
 |---|---|
 | [`examples/poster_howto.md`](examples/poster_howto.md) | ツール自身の機能 (箱・`layout:`・`{.full}`・`::: row`・画像救済) を1つずつ実演する．[ggposter の howto サンプル](https://github.com/matutosi/ggposter/blob/main/inst/extdata/poster_sample_howto.yml) を参考にした |
-| [`examples/golf_course.md`](examples/golf_course.md) | 見本 `poster.pdf` (草地性種の実データ) に近い内容．`layout:` で非対称配置を再現する |
+| [`examples/poster_howto2.md`](examples/poster_howto2.md) | 「入力 (md) → 出力」の早見表。`layout:` でページ全体を2段組にし，左列に入力例の箱・右列に出力例の箱を対にして並べる。レイアウトの2箱だけは単独行 (全幅) で，箱の中で上下に入力・出力を並べる |
+| [`examples/golf_course.md`](examples/golf_course.md) | 架空の研究データ (草地性種) を使った，見本に近い実例。`layout:` で非対称配置を再現する |
 
 いずれも `pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<ファイル>` で
 PDF を作れる (`golf_course.md` は内容が多いので `-FontSize 26pt` を付ける)．
@@ -41,10 +42,11 @@ PDF を作れる (`golf_course.md` は内容が多いので `-FontSize 26pt` を
 [`requirements/agent_E.md`](requirements/agent_E.md)，決定した方針は
 [`requirements/decision.md`](requirements/decision.md) にある．
 
-## 現状 (2026-08-29)
+## 現状 (2026-08-30)
 
-- **Windows 専用**．pandoc + Chrome/Edge (ヘッドレス印刷) + PowerShell (`pwsh`) で動く．
-  Mac/Linux 対応は検討中 ([`.claude/CLAUDE.md`](.claude/CLAUDE.md) の「次にやること」を見る)．
+- **Windows・Mac・Linux で動く**。pandoc + Chrome/Edge/Chromium (ヘッドレス印刷) +
+  PowerShell (`pwsh`) で動く。Mac/Linux は GitHub Actions
+  (`.github/workflows/test.yml`) で実際にビルドし，PDF の中身まで確認している。
 - **`build-poster-pdf` はこのリポジトリだけで版管理している**プロジェクト専用スキル．
   指示があるまでは，3台共有のユーザースキル (`~/.claude/skills/`) へは上げない．
 - 開発の詳しい進捗は [`.claude/CLAUDE.md`](.claude/CLAUDE.md) を見る．
