@@ -68,7 +68,22 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-30 (このセッション，x280-home) その5
+- 2026-08-30 (このセッション，x280-home) その6
+  **設計方針を「現状維持 (pandoc + Chrome)」で確定し，`grid:` (座標指定) を追加した**．
+  ユーザの「既存スキルを参考にしすぎでは．pandoc を使わない方法は」という問いから，
+  md-to-pdf (Marked + Puppeteer) と**ダッシュボード3種** (flexdashboard・Streamlit 系・
+  gridstack.js 系) を調べた．結論は**現状維持** (ユーザ確定)．理由: どの案も
+  「レイアウトエンジンとして Chrome / WeasyPrint / 自前組版のどれかは必ず要る」ため
+  **正味の依存は減らない**．WeasyPrint は CSS Grid の対応が不完全で `layout:` が壊れる恐れ，
+  Puppeteer は専用 Chromium を自前で抱えるので依存はむしろ増える．
+  一方 **gridstack.js の `{x,y,w,h}` 方式は取り入れる価値があると判断**し，
+  `grid:` キーとして実装した (`layout:` の行列表記も従来どおり使える．`grid:` が優先)．
+  重なり・右へのはみ出し・見出し名の不一致は pandoc がエラーで止める．
+  **実装中に踏んだ罠**: `pandoc.utils.type()` は MetaMap に対して `'Map'` ではなく
+  **`'table'` を返す**．`'Map'` で判定すると常に false になり，`grid:` が黙って無視されて
+  既定の流し込みに落ちる (PDF はできてしまうので気づきにくい)．
+
+- 2026-08-30 (x280-home) その5
   **`poster.pdf` (実在の研究者名を含む見本) を，過去のコミットも含めて履歴ごと削除した**
   (ユーザ指示．「無理なら最新版だけでも」との条件だったが，`git filter-repo`
   (`pip install git-filter-repo`) で**全18コミットから完全に除けた**)．
@@ -77,27 +92,15 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
   `git push --force-with-lease` で全面書き換え．**force push は今回の指示の範囲内**．
   作業ツリーの `poster.pdf` 自体も消える (履歴と一緒に消えるのが filter-repo の仕様)．
 
-- 2026-08-30 (x280-home) その4
-  **3本目の見本 `examples/poster_howto2.md` (入力→出力の早見表) を作成した** (ユーザ指示)．
-  最初は箱の中を `::: cols` で2分割する案で作ったが，**ユーザから「ページ全体の2段組で，
-  左列に入力・右列に出力」という指摘を受けて作り直した**: `layout:` でヘッダー・箇条書き・
-  表・図それぞれの「入力の箱」「出力の箱」を対にして2段組に並べ，レイアウトの説明2箱だけは
-  単独行 (全幅) にして箱の中で上下に積む．結果的に使わなかった `::: cols`/`.cols` の
-  CSS・SKILL.md の記述は削除した (未使用のまま残さない)．`-FontSize 26pt` で1ページに収まる．
-  ついでに見つけた SKILL.md の誤り (箱ごとの `--fig-max-h` 個別上書きは実装されていない)
-  も訂正した．コードブロック (\`\`\`) の体裁 (`pre`/`code`) も新設した (poster.css)．
-
-- 2026-08-30 (x280-home) その3
-  **`golf_course.md` の氏名・所属を架空のものに差し替えた** (ユーザ指示)．
-  見本 `poster.pdf` の実在の研究者名・所属をそのまま流用していたのを，
-  `Jane Doe`/`Taro Yamada`/`Hanako Sato` と `Example ...` の所属名に変更．
-  謝辞 (`note`) も実在の科研費番号を含んでいたので，「これはデモであり実在の
-  研究ではない」旨の断り書きに変えた．`poster_howto.md` はもともと実名を
-  使っていないので変更なし．
-
 - それ以前は [notes/history.md](notes/history.md) を見る．
 
 ### 次にやること
+
+**【決定 2026-08-30】全体の設計方針は pandoc + ヘッドレス Chrome のまま (ユーザ確定)**．
+md-to-pdf・ダッシュボード3種を調べた上での結論なので，**以後は蒸し返さない**．
+「pandoc をやめる」案 (Python の WeasyPrint 化・TypeScript の Puppeteer 化・自前組版) は
+いずれも**正味の依存が減らない**か，CSS Grid の再現度が落ちるか，実装コストが不釣り合い．
+経緯は「現在の状態」の 2026-08-30 その6 を見る．
 
 **【決定 2026-08-29】ユーザースキルへの引き上げは todo から削除した**．
 指示があれば改めて検討する (このセッションでは扱わない)．

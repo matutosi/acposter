@@ -158,10 +158,95 @@ function Pandoc(doc)
     out[#out + 1] = pandoc.Div(head, pandoc.Attr('', { 'title-band' }))
   end
 
-  -- layout (見出し名の行列) があれば CSS Grid，無ければ既定の段組み流し込み
+  -- 箱の配置の決め方は3通り (上から順に見て，最初に見つかったものを使う)．
+  --   1. `grid:` (座標指定)     … 各箱の x/y/w/h をそのまま CSS Grid の位置にする
+  --   2. `layout:` (見出しの行列) … 見た目どおりに並べた表から grid-template-areas を組む
+  --   3. どちらも無ければ         … CSS columns の段組み流し込み (新聞調)
+  local grid_meta   = doc.meta.grid
   local layout_meta = doc.meta.layout
   local content_attr
-  if layout_meta and is_list(layout_meta) then
+
+  -- YAML の連想配列 (MetaMap) か．
+  -- **`pandoc.utils.type()` は MetaMap に対して 'Map' ではなく 'table' を返す**
+  -- (2026-08-30 に実機で確認．'Map' で判定すると常に false になり，`grid:` が
+  -- 黙って無視されて既定の流し込みに落ちる)．リスト・文字列を除いた table とみなす．
+  local function is_map(v)
+    if type(v) ~= 'table' then return false end
+    local t = pandoc.utils.type and pandoc.utils.type(v) or nil
+    if t == 'List' or t == 'Inlines' or t == 'Blocks' then return false end
+    return true
+  end
+
+  -- メタデータの値を数値へ (無ければ既定値)
+  local function to_num(v, default)
+    if v == nil then return default end
+    local n = tonumber(pandoc.utils.stringify(v))
+    if n == nil then return default end
+    return math.floor(n)
+  end
+
+  if grid_meta and is_map(grid_meta) then
+    -- --- 1. 座標指定 (gridstack.js 風の x/y/w/h) -----------------------------
+    local cols = to_num(grid_meta.columns, 2)
+    if cols < 1 then error('grid.columns は1以上にする (今は ' .. cols .. ')．') end
+
+    local items = grid_meta.boxes
+    if not (items and is_list(items)) then
+      error('grid: には boxes のリストが要る (例: boxes: [{name: OBJECTIVES, x: 0, y: 0}])．')
+    end
+
+    local by_name = {}
+    for _, bx in ipairs(boxes) do by_name[normalize(bx.name)] = bx end
+    local matched = {}
+    local used = {}   -- 重なりの検査用 ("x,y" → 見出し名)
+
+    for _, item in ipairs(items) do
+      if not is_map(item) then
+        error('grid.boxes の要素は {name: ..., x: ..., y: ...} の形にする．')
+      end
+      local nm = pandoc.utils.stringify(item.name or '')
+      if nm == '' then error('grid.boxes の要素に name が無い．') end
+      local bx = by_name[normalize(nm)]
+      if not bx then
+        error('grid.boxes の見出し名が本文に無い: "' .. nm .. '"．`# ` の見出しと一字一句 (空白は詰めて) 揃える．')
+      end
+      matched[bx] = true
+
+      local x = to_num(item.x, 0)
+      local y = to_num(item.y, 0)
+      local w = to_num(item.w, 1)
+      local h = to_num(item.h, 1)
+      if x < 0 or y < 0 then error('grid.boxes の x・y は0以上にする ("' .. nm .. '")．') end
+      if w < 1 or h < 1 then error('grid.boxes の w・h は1以上にする ("' .. nm .. '")．') end
+      if x + w > cols then
+        error(('"%s" が右へはみ出している (x=%d, w=%d, columns=%d)．'):format(nm, x, w, cols))
+      end
+      -- 重なりを見つけたらエラーにする (黙って重ねて読めなくなるのを防ぐ)
+      for dy = 0, h - 1 do
+        for dx = 0, w - 1 do
+          local key = (x + dx) .. ',' .. (y + dy)
+          if used[key] then
+            error(('"%s" と "%s" が同じマス (x=%d, y=%d) で重なっている．'):format(used[key], nm, x + dx, y + dy))
+          end
+          used[key] = nm
+        end
+      end
+
+      bx.slug = to_slug(bx.name)
+      -- CSS Grid は1始まりなので +1 する
+      bx.grid_style = ('grid-column: %d / span %d; grid-row: %d / span %d;'):format(x + 1, w, y + 1, h)
+    end
+
+    for _, bx in ipairs(boxes) do
+      if not matched[bx] then
+        error('本文の見出し "' .. bx.name .. '" が grid.boxes に無い．全ての見出しを1回ずつ書く．')
+      end
+    end
+
+    content_attr = pandoc.Attr('', { 'content', 'grid' }, {
+      { 'style', ('display:grid; grid-template-columns: repeat(%d, 1fr);'):format(cols) }
+    })
+  elseif layout_meta and is_list(layout_meta) then
     local by_name = {}
     for _, bx in ipairs(boxes) do by_name[normalize(bx.name)] = bx end
     local matched = {}
@@ -214,7 +299,11 @@ function Pandoc(doc)
     local classes = { 'box' }
     if bx.full then classes[#classes + 1] = 'full' end
     local keyvals = {}
-    if content_attr.classes:includes('grid') then
+    if bx.grid_style then
+      -- 座標指定 (`grid:`) の箱は，計算した grid-column / grid-row をそのまま当てる
+      keyvals = { { 'style', bx.grid_style } }
+    elseif content_attr.classes:includes('grid') then
+      -- 行列指定 (`layout:`) の箱は，grid-template-areas の区画名で置く
       keyvals = { { 'style', 'grid-area: ' .. bx.slug .. ';' } }
     end
     local parts = {
