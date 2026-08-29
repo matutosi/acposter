@@ -13,15 +13,19 @@ LaTeX を使わず，pandoc + ヘッドレス Chrome で組む．既存の R/ggp
 |---|---|
 | `poster.pdf` | 見本 PDF (A0 縦，緑角丸枠の2段組ポスター) |
 | `requirements/` | 5エージェントによる独立要件定義 (`agent_A.md`〜`agent_E.md`) と，ユーザが確定した方針 (`decision.md`) |
+| `.claude/skills/build-poster-pdf/` | ツール本体 (SKILL.md・ps1・css・lua)．**このプロジェクト専用スキル** |
+| `test.md` / `test.pdf` | 動作確認に使った最小サンプル |
 
-**ツール本体 (SKILL.md・ps1・css・lua) はこのプロジェクトには置かない**．
-ユーザースキル `build-poster-pdf` として `~/.claude/skills/build-poster-pdf/`
-(実体は `todo/.claude/user/skills/build-poster-pdf/`，3台共有) に作った．
+**ツール本体はこのプロジェクト専用スキルとして置く** (`acposter/.claude/skills/build-poster-pdf/`)．
+**指示があるまでは** `~/.claude/skills/` (3台共有のユーザースキル) へは上げず，
+acposter の git リポジトリだけで版管理する (2026-08-29 ユーザ指示)．
 
 ## ツールの使い方 (概要)
 
+acposter ディレクトリで実行する．
+
 ```powershell
-pwsh -File ~/.claude/skills/build-poster-pdf/make_poster_pdf.ps1
+pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 ```
 
 型 (`type: "学術ポスター"`) を見て対象 md を選ぶ．引数・md の書き方の約束
@@ -49,13 +53,17 @@ pwsh -File ~/.claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-29 09:20 (このセッション，MATUTOSI_DP)
+- 2026-08-29 09:30 (このセッション，MATUTOSI_DP)
+  **`build-poster-pdf` を `acposter` 専用のプロジェクトスキルへ移した**
+  (`.claude/skills/build-poster-pdf/`．旧置き場所 `todo/.claude/user/skills/` は未コミットの
+  ままだったので移動のみで済んだ)．**指示があるまでは**ユーザースキル (3台共有) へは上げない．
+
+- 2026-08-29 09:20 (MATUTOSI_DP)
   **`build-poster-pdf` の動作確認をした (`test.md` → `test.pdf`)**．
   検算 (ページ数=1・箱数5/5・フォント埋め込み・用紙実寸 2384x3370pt) はすべて一致．
   2段組みの自動流し込み・`{.full}` の全幅指定・緑角丸枠・表題帯とも意図どおりに出た．
   **不具合を1件発見し修正済み**: `-Size` 引数とページ書き込み待ちループの `$size` 変数が
-  PowerShell の大文字小文字非依存で衝突し，`ValidateSet` エラーで落ちていた
-  (`$fileSize` に改名．スキル側の修正はまだ未コミット，このセッションの続きで扱う)．
+  PowerShell の大文字小文字非依存で衝突し，`ValidateSet` エラーで落ちていた (`$fileSize` に改名)．
 
 - 2026-08-29 09:12 (MATUTOSI_DP)
   **`build-poster-pdf` スキルを新設し，このプロジェクトを git 管理・GitHub リモート化した**．
@@ -64,10 +72,8 @@ pwsh -File ~/.claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 次にやること
 
-1. **`todo` 親リポジトリ側の未コミット**: 上記の `$fileSize` 修正 (と `build-poster-pdf`
-   新設一式) は `.claude/user/skills/build-poster-pdf/` にあり，**`todo` 親リポジトリで
-   まだコミットしていない**．次回のコミット依頼時にまとめる．
-2. `layout:` (CSS Grid モード) は今回のテストでは検証していない (既定の流し込みのみ確認済み)．
+1. `layout:` (CSS Grid モード) は今回のテストでは検証していない (既定の流し込みのみ確認済み)．
    見本 `poster.pdf` に近い非対称配置を試すときに検証する．
-3. 見本 `poster.pdf` に近い体裁になったら，このプロジェクトの役割 (要件定義・検証) は
-   ひとまず完了．以後の実運用は `2610_agentAI` 等の個別プロジェクト側で行う想定．
+2. 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
+   `~/.claude/skills/build-poster-pdf/` (3台共有のユーザースキル) へ引き上げる．
+   それまではこの `acposter/.claude/skills/build-poster-pdf/` のままでよい．

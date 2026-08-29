@@ -52,6 +52,9 @@ CSS 変数/属性1つで実現できるため含めた．自動段組み崩れ�
 
 ## 実装への反映
 
-上記の決定にもとづき，`~/.claude/skills/build-poster-pdf/` (実体は
-`todo/.claude/user/skills/build-poster-pdf/`) に SKILL.md・make_poster_pdf.ps1・
-poster.css・poster.lua を新設した．詳細は同スキルの `SKILL.md` を見る．
+上記の決定にもとづき，SKILL.md・make_poster_pdf.ps1・poster.css・poster.lua を新設した．
+詳細は同スキルの `SKILL.md` を見る．
+
+**置き場所は当初 `~/.claude/skills/build-poster-pdf/` (3台共有のユーザースキル) に置いたが，
+2026-08-29 のユーザ指示で `acposter/.claude/skills/build-poster-pdf/` (プロジェクト専用) へ
+移した．指示があるまでは acposter の git リポジトリだけで版管理する．**
