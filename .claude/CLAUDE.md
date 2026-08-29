@@ -62,7 +62,14 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-29 10:10 (このセッション，x280-home)
+- 2026-08-29 10:30 (このセッション，x280-home)
+  **README.md を新設し，Mac/Linux 対応に着手した** (ユーザ指示で「引き上げ」の todo は削除)．
+  ブラウザ探索を OS 別の既定パス + PATH 検索 (`google-chrome`・`chromium` 等) に変更，
+  フォントに Hiragino Sans・Noto Sans CJK JP・IPAGothic のフォールバックを追加．
+  Windows での回帰確認は済み (golf_course が引き続き1ページ・フォント埋め込み変化なし)．
+  **Mac/Linux 実機での確認はできていない** (手元に無いため)．
+
+- 2026-08-29 10:10 (x280-home)
   **見本・検証用ファイルを2種類に整理した** (ユーザ指示)．`test*.md` は削除し，
   `examples/poster_howto.md` (`ggposter` の howto サンプルを参考にした，
   ツール自身の機能デモ．layout 無しの既定の流し込み) と `examples/golf_course.md`
@@ -80,20 +87,23 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
   原因 (`width:100%` の明示指定が `max-height` との縦横同時収まり計算を妨げていた) を
   特定して直した (SKILL.md にも上書き方法を追記)．
 
-- 2026-08-29 09:40 (x280-home)
-  **`layout:` (CSS Grid モード) を検証した (`test_layout.md` → `test_layout.pdf`)**．
-  `[OBJECTIVES, CONCLUSIONS]` / `[BACKGROUNDS, RESULTS]` / `[METHODS, RESULTS]` / `[SUMMARY]`
-  の指定どおり，RESULTS が2行にまたがる縦長の箱に，SUMMARY が全幅の箱になった．検算も一致．
-
 - それ以前は [notes/history.md](notes/history.md) を見る．
 
 ### 次にやること
 
-1. **【保留】README の作成** (2026-08-29 ユーザ指示．書くだけで未着手)．
-2. 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
-   `~/.claude/skills/build-poster-pdf/` (3台共有のユーザースキル) へ引き上げる．
-   それまではこの `acposter/.claude/skills/build-poster-pdf/` のままでよい．
-3. **【保留】Mac/Linux では現状そのままでは使えない** (2026-08-29 ユーザからの質問で判明)．
+**【決定 2026-08-29】ユーザースキルへの引き上げは todo から削除した**．
+指示があれば改めて検討する (このセッションでは扱わない)．
+
+1. **README.md は作成済み** (2026-08-29)．内容の過不足は今後気づいたときに直す．
+2. **Mac/Linux 対応 (ブラウザ探索・フォント) は実装済み** (2026-08-29)．
+   実機が手元に無いため，**GitHub Actions (macos-latest・ubuntu-latest) で検証する**方式にした
+   (ユーザ指示．`.github/workflows/test.yml`)．そのため**リポジトリを Public にした**
+   (2026-08-29．Private では Actions の無料枠が限られるため)．
+   pandoc は `r-lib/actions/setup-pandoc` で入れ，2つの見本 (`examples/`) を実際にビルドして
+   PDF が生成できるかを確認する．結果は Actions のログと Artifact (PDF) で見る．
+
+1. README の作成 (2026-08-29 着手)．
+2. Mac/Linux では現状そのままでは使えない件への対応 (2026-08-29 着手)．
    - **ブラウザ探索が Windows 専用**: `make_poster_pdf.ps1` は
      `$env:ProgramFiles\Google\Chrome\Application\chrome.exe` のような Windows のパスを
      決め打ちで探している．Mac/Linux では場所が違うので見つからない．

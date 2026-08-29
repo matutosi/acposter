@@ -126,15 +126,33 @@ foreach ($line in (Get-Content -LiteralPath $Md -Encoding UTF8)) {
 
 if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) { throw 'pandoc が見つからない．' }
 
-# ヘッドレスで印刷できるブラウザを探す (Chrome を優先し，無ければ Edge)
-$browser = @(
-  "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
-  "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
-  "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe",
-  "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
-  "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $browser) { throw 'Chrome も Edge も見つからない．' }
+# ヘッドレスで印刷できるブラウザを探す (Chrome を優先し，無ければ Edge/Chromium)．
+# OS ごとに置き場所が違う (2026-08-29 Mac/Linux 対応)．$IsWindows 等は pwsh の自動変数．
+$candidatePaths = if ($IsMacOS) {
+  @(
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+  )
+} elseif ($IsLinux) {
+  @()   # Linux はディストロで場所がまちまちなので PATH 検索 (下) だけに頼る
+} else {
+  @(
+    "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+    "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+    "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe",
+    "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
+    "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
+  )
+}
+$browser = $candidatePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $browser) {
+  # 決め打ちパスで見つからなければ PATH 上のコマンド名で探す (Linux はほぼこちら経由)
+  $cmdNames = @('google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome', 'msedge')
+  $cmd = Get-Command -Name $cmdNames -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($cmd) { $browser = $cmd.Source }
+}
+if (-not $browser) { throw 'Chrome/Edge/Chromium が見つからない．' }
 
 # --- 用紙サイズ・向き・段数・文字サイズを @page / html へ差し込む -------------
 $mm = $SIZE_MM[$Size]

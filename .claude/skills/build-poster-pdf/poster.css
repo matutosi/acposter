@@ -17,8 +17,14 @@
 html { font-size: 26pt; }  /* 既定 A0 の基準値．ps1 が -Size / -FontSize で上書きする */
 
 body {
+  /* Windows の UD デジタル教科書体 N を第一候補にしつつ，Mac (Hiragino)・
+     Linux (Noto/IPA) の和文フォントも候補に足す (2026-08-29 Mac/Linux 対応)．
+     無ければ最後の sans-serif で欧文だけは崩れず出る． */
   font-family: "UD デジタル 教科書体 N", "UD Digi Kyokasho N",
-               "BIZ UDPGothic", "Yu Gothic UI", sans-serif;
+               "BIZ UDPGothic", "Yu Gothic UI",
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+               "Noto Sans CJK JP", "Noto Sans JP", "IPAGothic", "TakaoPGothic",
+               sans-serif;
   line-height: 1.4;
   margin: 0;
   color: #111;

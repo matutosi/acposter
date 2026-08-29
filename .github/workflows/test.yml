@@ -1,0 +1,43 @@
+name: build-poster-pdf cross-platform test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Show pwsh / browser info
+        shell: pwsh
+        run: |
+          pwsh -Version
+          Write-Host "IsWindows=$IsWindows IsMacOS=$IsMacOS IsLinux=$IsLinux"
+
+      - name: Build poster_howto example
+        shell: pwsh
+        run: |
+          pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
+            -Md examples/poster_howto.md -Pdf $env:RUNNER_TEMP/poster_howto.pdf
+
+      - name: Build golf_course example
+        shell: pwsh
+        run: |
+          pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 `
+            -Md examples/golf_course.md -FontSize 22pt -Pdf $env:RUNNER_TEMP/golf_course.pdf
+
+      - name: Upload generated PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: posters-${{ matrix.os }}
+          path: ${{ runner.temp }}/*.pdf

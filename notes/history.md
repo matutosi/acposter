@@ -4,6 +4,11 @@
 
 ## 2026-08-29
 
+- 2026-08-29 09:40 (x280-home)
+  **`layout:` (CSS Grid モード) を検証した (`test_layout.md` → `test_layout.pdf`)**．
+  `[OBJECTIVES, CONCLUSIONS]` / `[BACKGROUNDS, RESULTS]` / `[METHODS, RESULTS]` / `[SUMMARY]`
+  の指定どおり，RESULTS が2行にまたがる縦長の箱に，SUMMARY が全幅の箱になった．検算も一致．
+
 - 2026-08-29 09:30 (x280-home)
   **`build-poster-pdf` を `acposter` 専用のプロジェクトスキルへ移した**
   (`.claude/skills/build-poster-pdf/`．旧置き場所 `todo/.claude/user/skills/` は未コミットの

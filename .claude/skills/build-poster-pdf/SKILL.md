@@ -20,10 +20,20 @@ ps1+css+lua の3点構成，体裁ファイルはプロジェクト側で上書�
 ## 前提ツール
 
 - **pandoc** (Markdown → HTML)
-- **Chrome** (無ければ Edge。HTML → PDF の印刷に使う)
-- フォント **UD デジタル 教科書体 N** (Windows 10/11 に標準で入っている)
+- **Chrome** (無ければ Edge/Chromium。HTML → PDF の印刷に使う)
+- **pwsh** (PowerShell 7+。Windows/Mac/Linux いずれにも入る)
+- フォント **UD デジタル 教科書体 N** (Windows 10/11 に標準で入っている)。
+  無いとき (Mac/Linux) は Hiragino Sans → Noto Sans CJK JP → IPAGothic → 汎用 sans-serif の
+  順に探す (`poster.css` の `body` の `font-family`)。**体裁は Windows と完全には一致しない**。
 
 TeX Live も R も要らない。どれかが無ければスクリプトがエラーで知らせる。
+
+**Mac/Linux でも動く** (2026-08-29 対応)。ブラウザは OS ごとの既定の場所
+(Mac: `/Applications/Google Chrome.app/...` 等) と，見つからなければ PATH 上の
+コマンド名 (`google-chrome`・`chromium`・`chromium-browser` 等) の両方で探す。
+フォントは上記のとおり自動でフォールバックするが，**Windows の見た目 (UD デジタル教科書体) を
+そのまま再現するわけではない**。同じ設計の `build-abstract-pdf`・`build-slide-pdf`
+(ユーザースキル側) は今回は対応していない (このプロジェクトのスコープ外)。
 
 ## 使い方
 
