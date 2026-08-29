@@ -218,39 +218,47 @@ $browserArgs = @(
   "--print-to-pdf=$Pdf"
   $url
 )
-# 標準出力・標準エラーは必ずファイルへリダイレクトする．リダイレクトしないと，
-# Chrome が大量に吐くログ (macOS では Keystone アップデータのログなど) でパイプが
-# 埋まり，-Wait が永遠に返らずハングすることがある (2026-08-29，GitHub Actions の
-# macos-latest で実際に4時間以上ハングして発覚)．
-# さらに WaitForExit にタイムアウトを設け，原因不明のハングでも必ず打ち切る．
+# 標準出力・標準エラーは必ずファイルへリダイレクトする (リダイレクトしないと，
+# Chrome が大量に吐くログでパイプが埋まりハングする環境がある)．
+#
+# **プロセスの自然終了は待たない**．Chrome は PDF を書き終えたあとも，
+# `--user-data-dir` の一時プロファイルで `chrome://newtab` を開こうとして
+# 「Requested load of chrome://newtab/ for incorrect profile type」というエラーを
+# 出したまま**プロセスが終了しないことがある** (2026-08-29，GitHub Actions の
+# macos-latest で実際に確認．ファイルは正常に書けているのにプロセスだけ残る)．
+# そこで **PDF ファイルの完成をポーリングで検知し，見えたらプロセスを強制終了する**
+# 方式にする (Windows/Linux では Chrome は自然終了するので，この方式でも変わらず動く)．
 $stdoutLog = Join-Path ([IO.Path]::GetTempPath()) ('chrome-stdout-' + [Guid]::NewGuid().ToString('N') + '.log')
 $stderrLog = Join-Path ([IO.Path]::GetTempPath()) ('chrome-stderr-' + [Guid]::NewGuid().ToString('N') + '.log')
 $proc = Start-Process -FilePath $browser -ArgumentList $browserArgs -NoNewWindow -PassThru `
   -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
-if (-not $proc.WaitForExit(120000)) {
-  try { $proc.Kill() } catch {}
-  # 打ち切る前に，Chrome がそれまでに吐いていたログを表示する (原因調査のため．
-  # 2026-08-29，最初のハングでは何も出力できず原因が分からなかった)．
-  Write-Host '--- chrome stdout (timeout) ---'
-  Get-Content -LiteralPath $stdoutLog -ErrorAction SilentlyContinue | Write-Host
-  Write-Host '--- chrome stderr (timeout) ---'
-  Get-Content -LiteralPath $stderrLog -ErrorAction SilentlyContinue | Write-Host
-  Remove-Item $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
-  throw 'Chrome の印刷が120秒以内に終わらなかった (ハングした可能性)．'
-}
-Remove-Item $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
 
-# 書き込みが終わる (サイズが増えなくなる) まで最大 60 秒待つ
+# 書き込みが終わる (サイズが増えなくなる) まで最大 60 秒待つ．
 # ($Size は -Size 引数 (A0/A1) と大文字小文字を区別せず衝突するので $fileSize にする)
 $deadline = (Get-Date).AddSeconds(60)
 $fileSize = -1
+$stable = $false
 while ((Get-Date) -lt $deadline) {
   Start-Sleep -Milliseconds 300
   if (-not (Test-Path $Pdf)) { continue }
   $now = (Get-Item $Pdf).Length
-  if ($now -gt 0 -and $now -eq $fileSize) { break }
+  if ($now -gt 0 -and $now -eq $fileSize) { $stable = $true; break }
   $fileSize = $now
 }
+
+# プロセスが自分で終わっていなければ，ここで強制終了する (上のポーリングで
+# ファイルの完成は確認済みなので，プロセスが残っていても内容には影響しない)．
+if (-not $proc.HasExited) {
+  try { $proc.Kill() } catch {}
+}
+if (-not $stable) {
+  # ファイルが安定しないまま打ち切った場合だけ，原因調査用にログを出す．
+  Write-Host '--- chrome stdout (timeout) ---'
+  Get-Content -LiteralPath $stdoutLog -ErrorAction SilentlyContinue | Write-Host
+  Write-Host '--- chrome stderr (timeout) ---'
+  Get-Content -LiteralPath $stderrLog -ErrorAction SilentlyContinue | Write-Host
+}
+Remove-Item $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
 
 if (Test-Path $profileDir) { Remove-Item $profileDir -Recurse -Force -ErrorAction SilentlyContinue }
 
