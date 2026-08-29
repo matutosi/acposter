@@ -4,6 +4,24 @@
 
 ## 2026-08-29
 
+- 2026-08-29 10:10 (x280-home)
+  **見本・検証用ファイルを2種類に整理した** (ユーザ指示)．`test*.md` は削除し，
+  `examples/poster_howto.md` (`ggposter` の howto サンプルを参考にした，
+  ツール自身の機能デモ．layout 無しの既定の流し込み) と `examples/golf_course.md`
+  (見本 poster.pdf に近い実データ，`layout:` で非対称配置) の2本に統一．
+  さらに `::: row` 内の画像が div.fig に包まれていなかった不具合を lua 側で修正
+  (Div の中まで再帰するようにした)．poster_howto は1ページに収まり，golf_course は
+  `-FontSize 22pt` で1ページに収まることを確認 (既定 26pt だと2ページにあふれる実例)．
+
+- 2026-08-29 09:55 (x280-home)
+  **見本 `poster.pdf` に近いフルコンテンツで通しテストした (`test_full.md`)**．
+  `layout:` の2行またがり配置・画像記法の救済 (`[..](img.jpg)`)・`::: row` 横並びは
+  すべて意図どおり．一方，プレースホルダー画像が大きすぎて箱が伸びきり2ページ目にあふれた．
+  **原因を特定し `poster.css` に対策を追加**: 画像の高さを既定で画面高さの16%
+  (`--fig-max-h: 16vh`) に制限．さらに `::: row` 内の画像だけ縮まない不具合も見つけ，
+  原因 (`width:100%` の明示指定が `max-height` との縦横同時収まり計算を妨げていた) を
+  特定して直した (SKILL.md にも上書き方法を追記)．
+
 - 2026-08-29 09:40 (x280-home)
   **`layout:` (CSS Grid モード) を検証した (`test_layout.md` → `test_layout.pdf`)**．
   `[OBJECTIVES, CONCLUSIONS]` / `[BACKGROUNDS, RESULTS]` / `[METHODS, RESULTS]` / `[SUMMARY]`

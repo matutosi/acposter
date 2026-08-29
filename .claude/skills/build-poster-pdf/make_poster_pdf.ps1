@@ -214,7 +214,21 @@ $browserArgs = @(
   "--print-to-pdf=$Pdf"
   $url
 )
-Start-Process -FilePath $browser -ArgumentList $browserArgs -Wait -NoNewWindow | Out-Null
+# 標準出力・標準エラーは必ずファイルへリダイレクトする．リダイレクトしないと，
+# Chrome が大量に吐くログ (macOS では Keystone アップデータのログなど) でパイプが
+# 埋まり，-Wait が永遠に返らずハングすることがある (2026-08-29，GitHub Actions の
+# macos-latest で実際に4時間以上ハングして発覚)．
+# さらに WaitForExit にタイムアウトを設け，原因不明のハングでも必ず打ち切る．
+$stdoutLog = Join-Path ([IO.Path]::GetTempPath()) ('chrome-stdout-' + [Guid]::NewGuid().ToString('N') + '.log')
+$stderrLog = Join-Path ([IO.Path]::GetTempPath()) ('chrome-stderr-' + [Guid]::NewGuid().ToString('N') + '.log')
+$proc = Start-Process -FilePath $browser -ArgumentList $browserArgs -NoNewWindow -PassThru `
+  -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+if (-not $proc.WaitForExit(120000)) {
+  try { $proc.Kill() } catch {}
+  Remove-Item $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
+  throw 'Chrome の印刷が120秒以内に終わらなかった (ハングした可能性)．'
+}
+Remove-Item $stdoutLog, $stderrLog -Force -ErrorAction SilentlyContinue
 
 # 書き込みが終わる (サイズが増えなくなる) まで最大 60 秒待つ
 # ($Size は -Size 引数 (A0/A1) と大文字小文字を区別せず衝突するので $fileSize にする)
