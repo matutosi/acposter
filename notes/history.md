@@ -4,6 +4,14 @@
 
 ## 2026-08-29
 
+- 2026-08-29 10:30 (x280-home)
+  **README.md を新設し，Mac/Linux 対応に着手した** (ユーザ指示で「引き上げ」の todo は削除)．
+  ブラウザ探索を OS 別の既定パス + PATH 検索 (`google-chrome`・`chromium` 等) に変更，
+  フォントに Hiragino Sans・Noto Sans CJK JP・IPAGothic のフォールバックを追加．
+  Windows での回帰確認は済み (golf_course が引き続き1ページ・フォント埋め込み変化なし)．
+  さらにリポジトリを Public 化し，GitHub Actions (macos-latest・ubuntu-latest) で
+  実際にビルドして検証する仕組み (`.github/workflows/test.yml`) を追加した．
+
 - 2026-08-29 10:10 (x280-home)
   **見本・検証用ファイルを2種類に整理した** (ユーザ指示)．`test*.md` は削除し，
   `examples/poster_howto.md` (`ggposter` の howto サンプルを参考にした，

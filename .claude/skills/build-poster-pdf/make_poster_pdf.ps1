@@ -183,6 +183,7 @@ $pandocArgs = @(
   '--to=html5'
   '--standalone'
   '--embed-resources'
+  "--resource-path=$dir"
   "--lua-filter=$Lua"
   "--css=$Css"
   "--include-in-header=$inc"
@@ -198,7 +199,10 @@ Remove-Item $Pdf -Force -ErrorAction SilentlyContinue
 # Chrome は起動元プロセスより先に終わることがあるので，出力の完成をポーリングで待つ．
 # 一時プロファイルを使い，起動中の通常のブラウザと衝突させない．
 $profileDir = Join-Path ([IO.Path]::GetTempPath()) ('chrome-pdf-' + [Guid]::NewGuid().ToString('N'))
-$url = 'file:///' + $html.Replace([char]92, '/')
+# [Uri] で組み立てる (手で 'file:///' + パス を連結すると，Mac/Linux は絶対パスが
+# 既に '/' で始まるため 'file:////...' と2重スラッシュになり，Chrome が正しく読めず
+# 固まる罠がある．2026-08-29，GitHub Actions の macos-latest で発覚)．
+$url = ([Uri]$html).AbsoluteUri
 
 Write-Host "chrome : $Pdf"
 $browserArgs = @(
