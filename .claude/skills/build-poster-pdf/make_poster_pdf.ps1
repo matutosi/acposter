@@ -393,8 +393,12 @@ if ($Font) {
   if (-not ($fonts | Where-Object { $_ -replace '[\s,-]', '' -like "$want*" })) {
     Write-Warning ("指定した書体 '{0}' が埋め込まれていない．名前が合っているか，その PC に入っているかを確かめる．" -f $Font)
   }
-} elseif ($fonts -notcontains 'UDDigiKyokashoN') {
+} elseif ($IsWindows -and $fonts -notcontains 'UDDigiKyokashoN') {
   Write-Warning 'UDDigiKyokashoN が埋め込まれていない．CSS のファミリ名を確かめる (末尾に -R / -B を付けない)．'
+} elseif ($fonts -notcontains 'UDDigiKyokashoN') {
+  # UD デジタル教科書体は Windows 10/11 にしか入っていない．
+  # Mac/Linux では CSS のフォールバックで組まれるのが正しいので，警告にはしない．
+  Write-Host 'note   : UD デジタル教科書体が無いので，CSS のフォールバックで組んだ (体裁は Windows と完全には一致しない)．'
 }
 
 $mb = [regex]::Match($latin, '/MediaBox\s*\[\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*\]')
