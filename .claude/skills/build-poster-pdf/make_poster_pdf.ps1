@@ -21,10 +21,12 @@
   pwsh -File make_poster_pdf.ps1 -Columns 3              # layout 未指定のときの段数を3段にする
   pwsh -File make_poster_pdf.ps1 -FontSize 30pt          # 基準文字サイズを直接指定する
   pwsh -File make_poster_pdf.ps1 -Font "Yu Gothic"       # 書体を指定する (フォールバックは残る)
+  pwsh -File make_poster_pdf.ps1 -Accent "#0b4f9e"       # 差し色 (枠・見出し帯・表題帯) を変える
   pwsh -File make_poster_pdf.ps1 -KeepHtml               # 中間 HTML を残して体裁を確認する
 
-  用紙・向き・段数・文字サイズ・書体は md のヘッダーにも書ける (paper / orientation /
-  columns / font-size / font)．引数を書けばそちらが優先される．
+  用紙・向き・段数・文字サイズ・書体・差し色は md のヘッダーにも書ける (paper /
+  orientation / columns / font-size / font / accent)．引数を書けばそちらが優先される．
+  副題とロゴはヘッダーだけ (subtitle / logo)．
 #>
 [CmdletBinding()]
 param(
@@ -37,6 +39,7 @@ param(
   [int]$Columns = 2,
   [string]$FontSize = '',
   [string]$Font = '',
+  [string]$Accent = '',
   [switch]$KeepHtml
 )
 
@@ -184,6 +187,18 @@ if ($v) {
   } else { $Font = $v; $fromHeader += "font=$v" }
 }
 
+$v = Get-MetaValue $fm @('accent')
+if ($v) {
+  # font と同じく CSS の宣言の途中へ差し込むので，宣言や規則を閉じられる文字は通さない．
+  # 色名 (green)・#rrggbb・rgb(…) などを想定し，それ以外の記法は素通しせずに弾く．
+  if ($v -notmatch '^(#[0-9A-Fa-f]{3,8}|[A-Za-z]+|(rgb|rgba|hsl|hsla)\([0-9A-Za-z%.,\s/]+\))$') {
+    throw "ヘッダーの accent が不正: $v (例 #1a7a3c・navy・rgb(11 79 158))．"
+  }
+  if ($PSBoundParameters.ContainsKey('Accent')) {
+    if ($v -ne $Accent) { $overridden += "accent (ヘッダー $v / 引数 -Accent $Accent)" }
+  } else { $Accent = $v; $fromHeader += "accent=$v" }
+}
+
 if ($fromHeader.Count -gt 0) {
   Write-Host ('header : {0} (同名の引数を書けばそちらが優先)' -f ($fromHeader -join ', '))
 }
@@ -251,12 +266,22 @@ if ($Font) {
   $fontDecl = "`n:root { --user-font: $value; }"
 }
 
+# 差し色は枠・見出し帯・表題帯をまとめて変える (poster.css の2つの変数を上書きする)．
+# ヘッダー経由でも引数経由でも，差し込む前にここで必ず検査する．
+$accentDecl = ''
+if ($Accent) {
+  if ($Accent -notmatch '^(#[0-9A-Fa-f]{3,8}|[A-Za-z]+|(rgb|rgba|hsl|hsla)\([0-9A-Za-z%.,\s/]+\))$') {
+    throw "-Accent が不正: $Accent (例 #1a7a3c・navy・rgb(11 79 158))．"
+  }
+  $accentDecl = "`n:root { --box-color: $Accent; --title-bg: $Accent; }"
+}
+
 $inc = Join-Path ([IO.Path]::GetTempPath()) ('poster-size-' + [Guid]::NewGuid().ToString('N') + '.html')
 Set-Content -LiteralPath $inc -Encoding UTF8 -Value @"
 <style>
 @page { size: ${w}mm ${h}mm; }
 html { font-size: $pt; }
-:root { --content-columns: $Columns; }$fontDecl
+:root { --content-columns: $Columns; }$fontDecl$accentDecl
 </style>
 "@
 

@@ -42,6 +42,7 @@ img { max-width: 100%; }
 
 /* --- 表題帯 (最上部・常に全幅の1段) ----------------------------------------- */
 .title-band {
+  position: relative;   /* ロゴ (.logo) を右端へ絶対配置するための基準 */
   background: var(--title-bg);
   color: #fff;
   text-align: center;
@@ -50,9 +51,35 @@ img { max-width: 100%; }
   margin: 0 0 0.8em;
 }
 .title-band h1 { margin: 0 0 0.35em; font-size: 2em; font-weight: bold; line-height: 1.25; }
+.title-band .subtitle { font-size: 1.2em; font-weight: bold; margin: -0.15em 0 0.4em; }
 .title-band .byline { font-size: 1.05em; }
 .title-band .note   { font-size: 0.6em; opacity: 0.9; margin-top: 0.35em; }
 .title-band p { margin: 0; }
+
+/* ロゴ (ヘッダーの logo)．帯の右端に縦中央で重ねる．表題は帯の幅いっぱいで
+   中央揃えのままにしたいので，通常の流れから absolute で逃がしている．
+   複数書いたときは左から順に並ぶ． */
+/* ロゴがあるときは，表題がロゴの下へ潜り込まないように帯の左右を空ける
+   (poster.lua が .has-logo を付ける)．左右そろえるのは表題の中央を保つため． */
+.title-band.has-logo { padding-left: 16%; padding-right: 16%; }
+
+.title-band .logo {
+  position: absolute;
+  right: 1.2em;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  max-width: 15%;   /* .has-logo で空けた余白 (16%) からはみ出させない */
+}
+.title-band .logo img {
+  max-height: var(--logo-max-h, 3.2em);
+  max-width: 100%;
+  width: auto;
+  border: 0;
+  display: block;
+}
 
 /* --- 本文の入れもの ---------------------------------------------------------
    layout 未指定 (.flow): CSS columns で新聞調に流し込む (左列を上から埋め，右列へ)．

@@ -1,8 +1,9 @@
 -- 学術ポスター (A0/A1・1枚) の md を組むための pandoc Lua フィルタ．
 --
--- 1. ヘッダー (YAML front matter) の title / author / institute / note から表題帯を作る．
---    author は authors・poster-authors，institute は institutes・affiliation(s)，
---    note は funding・footer でも書ける (ggposter・qtposter と同じ名前を受けるため)．
+-- 1. ヘッダー (YAML front matter) の title / subtitle / author / institute / note / logo
+--    から表題帯を作る．author は authors・poster-authors，institute は institutes・
+--    affiliation(s)，note は funding・footer でも書ける
+--    (ggposter・qtposter と同じ名前を受けるため)．
 -- 2. `# ` ごとに1つの緑角丸枠 (div.box) へ切り分ける (スライドの「1枚」がポスターでは「1枠」になる)．
 -- 3. ヘッダーに `layout:` (見出し名の行列) があれば CSS Grid の配置に，無ければ既定の
 --    段組み流し込み (CSS columns) に切り替える．
@@ -163,6 +164,12 @@ function Pandoc(doc)
   local title = pandoc.utils.stringify(doc.meta.title or '')
   if title ~= '' then
     local head = { pandoc.Header(1, to_inlines(title)) }
+    -- 副題は表題のすぐ下 (ggposter の title.subtitle・qtposter の subtitle と同じ位置)
+    local subtitle = table.concat(meta_alias(doc.meta, { 'subtitle' }), ' ')
+    if subtitle ~= '' then
+      head[#head + 1] = pandoc.Div(pandoc.Para(to_inlines(subtitle)),
+                                   pandoc.Attr('', { 'subtitle' }))
+    end
     local byline = make_byline(doc.meta)
     if byline then
       head[#head + 1] = pandoc.Div(pandoc.Para(to_inlines(byline)), pandoc.Attr('', { 'byline' }))
@@ -171,7 +178,21 @@ function Pandoc(doc)
     if note ~= '' then
       head[#head + 1] = pandoc.Div(pandoc.Para(to_inlines(note)), pandoc.Attr('', { 'note' }))
     end
-    out[#out + 1] = pandoc.Div(head, pandoc.Attr('', { 'title-band' }))
+    -- ロゴは表題帯の右端に重ねる (CSS で位置を決める)．表題の中央揃えを崩さないため，
+    -- 帯の中の最後に置いて absolute で逃がす．複数書けば左から順に並ぶ．
+    local logos = meta_alias(doc.meta, { 'logo', 'logos' })
+    local band_classes = { 'title-band' }
+    if #logos > 0 then
+      local imgs = {}
+      for _, src in ipairs(logos) do
+        imgs[#imgs + 1] = pandoc.Image({}, src)
+      end
+      head[#head + 1] = pandoc.Div(pandoc.Plain(imgs), pandoc.Attr('', { 'logo' }))
+      -- ロゴは absolute なので場所を取らない．長い表題がロゴの下へ潜り込まないよう，
+      -- ロゴがあるときだけ帯の左右の余白を広げる (左右そろえて表題の中央を保つ)．
+      band_classes[#band_classes + 1] = 'has-logo'
+    end
+    out[#out + 1] = pandoc.Div(head, pandoc.Attr('', band_classes))
   end
 
   -- 箱の配置の決め方は3通り (上から順に見て，最初に見つかったものを使う)．
