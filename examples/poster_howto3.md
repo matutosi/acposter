@@ -3,6 +3,7 @@ title: "build-poster-pdf: irregular layouts"
 author: ["Row spans, column spans, and the two ways to write them"]
 institute: ["build-poster-pdf"]
 type: "学術ポスター"
+font-size: 26pt
 note: "This page is itself an irregular layout. The grid: header below places every box by coordinate, including the tall box on the right and the wide boxes at the bottom."
 grid:
   columns: 3

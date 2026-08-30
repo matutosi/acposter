@@ -3,6 +3,7 @@ title: "build-poster-pdf: input to output"
 author: ["A cheat sheet of the build-poster-pdf syntax"]
 institute: ["build-poster-pdf"]
 type: "学術ポスター"
+font-size: 26pt
 note: "Left column: what you write in the .md. Right column: what comes out. See poster_howto.md for a feature tour instead."
 layout:
   - [Header input, Header output]

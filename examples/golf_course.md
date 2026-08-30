@@ -3,6 +3,7 @@ title: "The relationship between grassland species richness and the management i
 author: ["Jane Doe", "Taro Yamada", "Hanako Sato"]
 institute: ["Example Women's Univ.", "Example Museum of Nature and Human Activities", "Example Landscape Planning & Horticulture Academy"]
 type: "学術ポスター"
+font-size: 26pt
 note: "※This is a demonstration poster for the build-poster-pdf skill; it does not describe real research. Names, affiliations, and funding are fictional."
 layout:
   - [OBJECTIVES, CONCLUSIONS]
