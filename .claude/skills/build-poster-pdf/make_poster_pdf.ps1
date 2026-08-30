@@ -20,10 +20,11 @@
   pwsh -File make_poster_pdf.ps1 -Orientation landscape  # 横長で作る (既定は縦長)
   pwsh -File make_poster_pdf.ps1 -Columns 3              # layout 未指定のときの段数を3段にする
   pwsh -File make_poster_pdf.ps1 -FontSize 30pt          # 基準文字サイズを直接指定する
+  pwsh -File make_poster_pdf.ps1 -Font "Yu Gothic"       # 書体を指定する (フォールバックは残る)
   pwsh -File make_poster_pdf.ps1 -KeepHtml               # 中間 HTML を残して体裁を確認する
 
-  用紙・向き・段数・文字サイズは md のヘッダーにも書ける (paper / orientation /
-  columns / font-size)．引数を書けばそちらが優先される．
+  用紙・向き・段数・文字サイズ・書体は md のヘッダーにも書ける (paper / orientation /
+  columns / font-size / font)．引数を書けばそちらが優先される．
 #>
 [CmdletBinding()]
 param(
@@ -35,6 +36,7 @@ param(
   [ValidateSet('portrait', 'landscape')][string]$Orientation = 'portrait',
   [int]$Columns = 2,
   [string]$FontSize = '',
+  [string]$Font = '',
   [switch]$KeepHtml
 )
 
@@ -172,6 +174,16 @@ if ($v) {
   } else { $FontSize = $v; $fromHeader += "font-size=$v" }
 }
 
+$v = Get-MetaValue $fm @('font', 'font-family', 'font_family')
+if ($v) {
+  # 差し込む先は CSS の宣言の途中なので，宣言や規則を閉じられる文字は通さない．
+  if ($v -match '[{};
+]') { throw "ヘッダーの font に使えない文字がある: $v" }
+  if ($PSBoundParameters.ContainsKey('Font')) {
+    if ($v -ne $Font) { $overridden += "font (ヘッダー $v / 引数 -Font $Font)" }
+  } else { $Font = $v; $fromHeader += "font=$v" }
+}
+
 if ($fromHeader.Count -gt 0) {
   Write-Host ('header : {0} (同名の引数を書けばそちらが優先)' -f ($fromHeader -join ', '))
 }
@@ -224,12 +236,27 @@ $w  = $mm.w; $h = $mm.h
 if ($Orientation -eq 'landscape') { $tmp = $w; $w = $h; $h = $tmp }
 $pt = if ($FontSize) { $FontSize } else { "$($FONT_PT[$Size])pt" }
 
+# 書体は poster.css の並びの**先頭だけ**を差し替える (--user-font)．
+# 総入れ替えにすると Mac/Linux 用のフォールバックまで消えてしまうため．
+# 総称ファミリ (sans-serif など) と，自分で並びを書いた場合 (カンマを含む) は
+# 引用符で囲まない．それ以外は空白を含む名前が多いので囲む．
+$fontDecl = ''
+if ($Font) {
+  $generic = @('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui')
+  $value = if ($Font.Contains(',') -or ($generic -contains $Font.ToLowerInvariant())) {
+    $Font
+  } else {
+    '"' + $Font.Trim('"', "'") + '"'
+  }
+  $fontDecl = "`n:root { --user-font: $value; }"
+}
+
 $inc = Join-Path ([IO.Path]::GetTempPath()) ('poster-size-' + [Guid]::NewGuid().ToString('N') + '.html')
 Set-Content -LiteralPath $inc -Encoding UTF8 -Value @"
 <style>
 @page { size: ${w}mm ${h}mm; }
 html { font-size: $pt; }
-:root { --content-columns: $Columns; }
+:root { --content-columns: $Columns; }$fontDecl
 </style>
 "@
 
@@ -359,7 +386,14 @@ if ($boxInHtml -ne $boxCount) {
 }
 
 Write-Host ('埋め込みフォント: {0}' -f ($fonts -join ', '))
-if ($fonts -notcontains 'UDDigiKyokashoN') {
+if ($Font) {
+  # 書体を指定したときは既定の UD デジタル教科書体でなくて当たり前なので，
+  # 「指定したものが実際に埋め込まれたか」を見る (空白と引用符を落として突き合わせる)．
+  $want = ($Font -split ',')[0].Trim().Trim('"', "'") -replace '\s', ''
+  if (-not ($fonts | Where-Object { $_ -replace '[\s,-]', '' -like "$want*" })) {
+    Write-Warning ("指定した書体 '{0}' が埋め込まれていない．名前が合っているか，その PC に入っているかを確かめる．" -f $Font)
+  }
+} elseif ($fonts -notcontains 'UDDigiKyokashoN') {
   Write-Warning 'UDDigiKyokashoN が埋め込まれていない．CSS のファミリ名を確かめる (末尾に -R / -B を付けない)．'
 }
 

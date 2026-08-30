@@ -1,6 +1,6 @@
 ---
 name: build-poster-pdf
-description: 学会発表の学術ポスター(A0/A1・1枚)のMarkdown原稿を、pandoc + ヘッドレスChromeでPDFにするスキル。LaTeXを使わない。原稿の先頭にYAMLヘッダー(`title`/`author`/`institute`/`type`/`note`)を置き、`type`が`学術ポスター`のときに処理する。表題・著者・所属は緑地の表題帯として自動生成し、`date`は読み飛ばす。本文は`# `見出し1つが緑角丸枠(箱)になり、既定では2段組みの新聞調に流し込む(左列を上から埋め右列へ)。ヘッダーに`layout:`(見出し名の行列)か`grid:`(各箱の x/y/w/h 座標)を書くとCSS Gridで箱の配置を明示でき、見本のような非対称な配置も再現できる。用紙はA0/A1・縦横を選べ、できたPDFのページ数(常に1のはず)・用紙実寸・箱の数・埋め込みフォントを検算して表示する。出力名は既定で`<mdの基幹名>.pdf`。用紙・向き・段数・文字サイズは引数でもヘッダー(`paper`/`orientation`/`columns`/`font-size`)でも書け、姉妹ツール ggposter・qtposter と共通のキー名(`poster-authors`・`institutes`・`footer` など)も別名として受ける。ユーザーが「ポスターのPDFを作って」「学術ポスターをPDF化」「A0のポスターを組んで」「ポスターを再生成して」などと言ったときに使う。A4 1枚の要旨はbuild-abstract-pdf、投影資料(スライド)はbuild-slide-pdf、書籍や長い原稿はbuild-book-pdfを使う。既存のRベースツール ggposter とは別系統(置き換えではない)。
+description: 学会発表の学術ポスター(A0/A1・1枚)のMarkdown原稿を、pandoc + ヘッドレスChromeでPDFにするスキル。LaTeXを使わない。原稿の先頭にYAMLヘッダー(`title`/`author`/`institute`/`type`/`note`)を置き、`type`が`学術ポスター`のときに処理する。表題・著者・所属は緑地の表題帯として自動生成し、`date`は読み飛ばす。本文は`# `見出し1つが緑角丸枠(箱)になり、既定では2段組みの新聞調に流し込む(左列を上から埋め右列へ)。ヘッダーに`layout:`(見出し名の行列)か`grid:`(各箱の x/y/w/h 座標)を書くとCSS Gridで箱の配置を明示でき、見本のような非対称な配置も再現できる。用紙はA0/A1・縦横を選べ、できたPDFのページ数(常に1のはず)・用紙実寸・箱の数・埋め込みフォントを検算して表示する。出力名は既定で`<mdの基幹名>.pdf`。用紙・向き・段数・文字サイズ・書体は引数でもヘッダー(`paper`/`orientation`/`columns`/`font-size`/`font`)でも書け、姉妹ツール ggposter・qtposter と共通のキー名(`poster-authors`・`institutes`・`footer` など)も別名として受ける。ユーザーが「ポスターのPDFを作って」「学術ポスターをPDF化」「A0のポスターを組んで」「ポスターを再生成して」などと言ったときに使う。A4 1枚の要旨はbuild-abstract-pdf、投影資料(スライド)はbuild-slide-pdf、書籍や長い原稿はbuild-book-pdfを使う。既存のRベースツール ggposter とは別系統(置き換えではない)。
 ---
 
 # 学術ポスターの PDF ビルド (Chrome + CSS 経路)
@@ -51,6 +51,7 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 | `-Orientation portrait\|landscape` | 向き (既定 `portrait`＝縦長)。ヘッダーの `orientation` でも書ける |
 | `-Columns N` | **`layout:`・`grid:` 未指定のとき**の段数 (既定 `2`)。どちらかを書けば列数はそちらが決める。ヘッダーの `columns`/`cols` でも書ける |
 | `-FontSize` | 基準文字サイズを直接指定 (既定は `-Size` ごとの目安値。**A4 に印刷して読みにくければ上げる**)。ヘッダーの `font-size` でも書ける |
+| `-Font` | 書体 (`"Yu Gothic"` など)。ヘッダーの `font` でも書ける。**並びの先頭だけが差し替わり**、Mac/Linux 用のフォールバックは残る |
 | `-KeepHtml` | 中間 HTML (`<基幹名>.tmp.html`) を残す。段組みの崩れを目視で確かめるときに使う |
 | `-Css` / `-Lua` | 体裁ファイルを明示する |
 
@@ -86,6 +87,7 @@ note: "※本研究はJSPS科研費 15K07833 の助成を受けた"
 | `orientation` | 向き (`portrait`/`landscape`)。`-Orientation` と同じ |
 | `columns` | 段数。`cols` でも受ける。`-Columns` と同じ |
 | `font-size` | 基準文字サイズ (`30pt` など)。`font_size` でも受ける。`-FontSize` と同じ |
+| `font` | 書体。`font-family`/`font_family` でも受ける。`-Font` と同じ |
 
 ### ヘッダーと引数の両方に書いたとき
 
@@ -115,6 +117,24 @@ note: "※本研究はJSPS科研費 15K07833 の助成を受けた"
   自動で画像として救済される (保険。正式には `![...]` を使う)。
 - 画像を横に並べたいときは `::: row` … `:::` で囲む。**画像どうしは空行で区切る**
   (空行が無いと1つの段落・1つの箱にまとまり，横並びにならない)。
+### 書体を変える
+
+ヘッダーの `font` (または `-Font`) に書く。**`poster.css` の並びの先頭だけが
+差し替わる**ので、Mac/Linux 用のフォールバック (Hiragino / Noto / IPAGothic) は
+そのまま残る。総称ファミリ (`sans-serif` など) と、自分で並びを書いた場合
+(カンマを含む) はそのまま渡し、それ以外は引用符で囲む。
+
+```yaml
+font: "Yu Gothic"
+```
+
+**指定した書体が実際に埋め込まれたかを検算する**。名前の綴り違いや、その PC に
+入っていない書体を指定したときは警告が出る(既定のフォールバックで組まれる)。
+
+```
+WARNING: 指定した書体 'No Such Font' が埋め込まれていない．名前が合っているか，その PC に入っているかを確かめる．
+```
+
 - **画像の高さは既定で画面高さの30% (`--fig-max-h: 30vh`) までに抑える**。
   箱は中身に応じて自然に伸びる (固定 height なし) ので，これが無いと大きな画像1枚だけで
   箱が伸びきり，後続の箱がページからあふれる (2026-08-29 のフルコンテンツ検証で発見)。
@@ -239,6 +259,7 @@ grid:
   | 用紙 | `paper` | (無し。`-Size` と同義) |
   | 段数 | `columns` | `cols` |
   | 文字サイズ | `font-size` | `font_size` |
+  | 書体 | `font` | `font-family`・`font_family` |
 
   **`size` はどのツールでも別名にしない**。ggposter では用紙，qtposter では文字サイズを
   指しており，黙って取り違えるとポスターが別物になるため。用紙は `paper`，
