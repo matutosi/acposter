@@ -70,6 +70,13 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
+- 2026-08-31 10:30 (このセッション，x280-home) その12
+  **埋め込みフォントの検算が Mac/Linux で誤警告しないようにした**．
+  `UDDigiKyokashoN` の有無を無条件に見ていたので，UD デジタル教科書体が入っていない
+  Mac/Linux では必ず警告が出ていた (GitHub Actions のビルドでも出ていたはず)．
+  Windows のときだけ警告にし，それ以外は note を出す．
+  同じ直しを `build-abstract-pdf`・`build-slide-pdf` にも入れた．
+
 - 2026-08-31 08:55 (このセッション，x280-home) その11
   **書体をヘッダー (`font`) と引数 (`-Font`) から指定できるようにした** (ユーザ指示の4)．
   3系統のうち acposter だけ書体を CSS でしか変えられず，キーの対応表で唯一の × だった．
@@ -166,10 +173,10 @@ GitHub Actions (`.github/workflows/test.yml`，macos-latest・ubuntu-latest) で
 実際に2つの見本をビルドし，**Artifact の PDF を目視確認するところまで**やって
 Mac/Linux で正しく組めることを確かめた．リポジトリは検証のため Public 化済み．
 
-1. **【判断待ち】** 見本 `poster.pdf` に近い体裁になり，**ユーザから指示があれば**，
-   `~/.claude/skills/build-poster-pdf/` (3台共有のユーザースキル) へ引き上げる．
-   それまではこの `acposter/.claude/skills/build-poster-pdf/` のままでよい．
-2. 同じ設計 (pandoc + ヘッドレス Chrome + PowerShell ラッパー) の
-   `build-abstract-pdf`・`build-slide-pdf` (ユーザースキル側) は，今回の
-   Mac/Linux 対応 (ブラウザ探索・フォント・`file://` URL 組み立て) を反映していない．
-   対応するかは指示があってから (3スキル共通の課題として扱う想定)．
+**【完了 2026-08-31】`build-abstract-pdf`・`build-slide-pdf` へ Mac/Linux 対応を反映した**
+(ユーザ指示)．ブラウザ探索・`file://` URL の組み立て・CSS のフォールバックの3点．
+あわせて，このスキルの埋め込みフォントの検算も Mac/Linux で誤警告しないように直した
+(UD デジタル教科書体が無い環境では警告ではなく note を出す)．
+
+**【決定 2026-08-31】ユーザースキルへの引き上げは，次にやることから外した** (ユーザ指示)．
+やるときはユーザから指示が出る．それまではこの `acposter/.claude/skills/build-poster-pdf/` のまま．
