@@ -21,6 +21,9 @@
   pwsh -File make_poster_pdf.ps1 -Columns 3              # layout 未指定のときの段数を3段にする
   pwsh -File make_poster_pdf.ps1 -FontSize 30pt          # 基準文字サイズを直接指定する
   pwsh -File make_poster_pdf.ps1 -KeepHtml               # 中間 HTML を残して体裁を確認する
+
+  用紙・向き・段数・文字サイズは md のヘッダーにも書ける (paper / orientation /
+  columns / font-size)．引数を書けばそちらが優先される．
 #>
 [CmdletBinding()]
 param(
@@ -51,7 +54,8 @@ function Get-FrontMatter([string]$path) {
   for ($i = 1; $i -lt $lines.Count; $i++) {
     if ($lines[$i].Trim() -eq '---') { return $fm }
     if ($lines[$i] -match '^\s*#') { continue }
-    if ($lines[$i] -match '^\s*([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$') {
+    # 字下げのある行は入れ子 (grid: の下の columns: など) なので採らない．
+    if ($lines[$i] -match '^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$') {
       $fm[$matches[1]] = $matches[2].Trim().Trim('"', "'")
     }
   }
@@ -113,6 +117,54 @@ if ($null -eq $fm) {
   Write-Host ('type   : {0}' -f $fm['type'])
   if ($fm.Contains('date')) { Write-Host 'date   : 読み飛ばす (学術ポスターでは使わない)' }
   if (-not $fm.Contains('title')) { Write-Warning 'ヘッダーに title が無い．表題帯が出ない．' }
+}
+
+# --- 用紙・向き・段数・文字サイズをヘッダーからも受ける (引数が優先) -----------
+# ggposter・qtposter はこれらを原稿のヘッダーに書く．acposter だけ「原稿の外」に
+# 設定があると移し替えのたびに書き直しになるので，同じ名前でヘッダーにも書けるようにした
+# (2026-08-31)．`size` は用紙 (ggposter) と文字サイズ (qtposter) の両方の意味で
+# 使われているため，どちらの別名にもしない．用紙は `paper`，文字は `font-size` と書く．
+function Get-MetaValue($fm, [string[]]$names) {
+  if ($null -eq $fm) { return $null }
+  foreach ($n in $names) {
+    if ($fm.Contains($n) -and "$($fm[$n])" -ne '') { return "$($fm[$n])" }
+  }
+  return $null
+}
+$fromHeader = @()
+if (-not $PSBoundParameters.ContainsKey('Size')) {
+  $v = Get-MetaValue $fm @('paper')
+  if ($v) {
+    $u = $v.ToUpperInvariant()
+    if (-not $SIZE_MM.Contains($u)) { throw "ヘッダーの paper が不正: $v (A0 か A1)．" }
+    $Size = $u; $fromHeader += "paper=$u"
+  }
+}
+if (-not $PSBoundParameters.ContainsKey('Orientation')) {
+  $v = Get-MetaValue $fm @('orientation')
+  if ($v) {
+    $l = $v.ToLowerInvariant()
+    if ($l -notin @('portrait', 'landscape')) { throw "ヘッダーの orientation が不正: $v (portrait か landscape)．" }
+    $Orientation = $l; $fromHeader += "orientation=$l"
+  }
+}
+if (-not $PSBoundParameters.ContainsKey('Columns')) {
+  $v = Get-MetaValue $fm @('columns', 'cols')
+  if ($v) {
+    $n = 0
+    if (-not [int]::TryParse($v, [ref]$n) -or $n -lt 1) { throw "ヘッダーの columns が不正: $v (1 以上の整数)．" }
+    $Columns = $n; $fromHeader += "columns=$n"
+  }
+}
+if (-not $PSBoundParameters.ContainsKey('FontSize')) {
+  $v = Get-MetaValue $fm @('font-size', 'font_size')
+  if ($v) {
+    if ($v -notmatch '^[0-9]+(\.[0-9]+)?(pt|px|mm|em|rem)$') { throw "ヘッダーの font-size が不正: $v (例 30pt)．" }
+    $FontSize = $v; $fromHeader += "font-size=$v"
+  }
+}
+if ($fromHeader.Count -gt 0) {
+  Write-Host ('header : {0} (同名の引数を書けばそちらが優先)' -f ($fromHeader -join ', '))
 }
 
 # --- 箱の数を数える (あとで検算の見込み値にする) -------------------------------

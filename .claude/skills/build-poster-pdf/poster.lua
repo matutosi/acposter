@@ -1,6 +1,8 @@
 -- 学術ポスター (A0/A1・1枚) の md を組むための pandoc Lua フィルタ．
 --
 -- 1. ヘッダー (YAML front matter) の title / author / institute / note から表題帯を作る．
+--    author は authors・poster-authors，institute は institutes・affiliation(s)，
+--    note は funding・footer でも書ける (ggposter・qtposter と同じ名前を受けるため)．
 -- 2. `# ` ごとに1つの緑角丸枠 (div.box) へ切り分ける (スライドの「1枚」がポスターでは「1枠」になる)．
 -- 3. ヘッダーに `layout:` (見出し名の行列) があれば CSS Grid の配置に，無ければ既定の
 --    段組み流し込み (CSS columns) に切り替える．
@@ -40,11 +42,25 @@ local function to_list(v)
   return out
 end
 
+-- 姉妹ツール (ggposter・qtposter) が同じ意味に使っているキー名も受ける．
+-- 名前が違うだけで中身は同じなので，ヘッダーを書き換えずに移し替えられるようにする．
+-- 先に書いてある名前 (正) を優先し，無ければ別名を順に見る．
+local function meta_alias(meta, names)
+  for _, k in ipairs(names) do
+    local v = meta[k]
+    if v ~= nil then
+      local list = to_list(v)
+      if #list > 0 then return list end
+    end
+  end
+  return {}
+end
+
 -- 「氏名(所属)」の行を作る (build-abstract-pdf の abstract.lua と同じロジック)
 local function make_byline(meta)
-  local authors = to_list(meta.author)
-  local affils  = to_list(meta.institute)
-  if #affils == 0 then affils = to_list(meta.affiliation) end
+  local authors = meta_alias(meta, { 'author', 'authors', 'poster-authors' })
+  local affils  = meta_alias(meta, { 'institute', 'institutes',
+                                     'affiliation', 'affiliations' })
   if #authors == 0 then return nil end
   if #affils == 0 then return table.concat(authors, '・') end
   if #affils == 1 then
@@ -151,7 +167,7 @@ function Pandoc(doc)
     if byline then
       head[#head + 1] = pandoc.Div(pandoc.Para(to_inlines(byline)), pandoc.Attr('', { 'byline' }))
     end
-    local note = pandoc.utils.stringify(doc.meta.note or '')
+    local note = table.concat(meta_alias(doc.meta, { 'note', 'funding', 'footer' }), ' ')
     if note ~= '' then
       head[#head + 1] = pandoc.Div(pandoc.Para(to_inlines(note)), pandoc.Attr('', { 'note' }))
     end

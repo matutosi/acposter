@@ -22,8 +22,21 @@ ggposter とは別系統のツールで，どちらを使うかは案件ごと�
 pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル>.md
 ```
 
+用紙・向き・段数・文字サイズは**引数でも md のヘッダーでも書ける**
+(`paper`・`orientation`・`columns`・`font-size`．引数を書けばそちらが優先)．
+
 引数・md の書き方の約束は
 [`.claude/skills/build-poster-pdf/SKILL.md`](.claude/skills/build-poster-pdf/SKILL.md) が正．
+
+## ggposter・qtposter との行き来
+
+同じ種類のポスターを作るツールが3系統ある (acposter・[ggposter](https://github.com/matutosi/ggposter)・qtposter)．
+**本文の書き方は統一できない**が (構造化データと散文という根の違い)，
+**ヘッダーのキー名は3つとも別名で受ける** (`author`/`authors`/`poster-authors` など)．
+配置を移したいときは，acposter と ggposter で**完全に同じ書式**の `grid:` を使う
+(`layout:` は同名で構造が違うので移し替えには使えない)．
+3つの比較は `todo/.claude/notes/poster_tools.md`，細かい対応表は SKILL.md の
+「姉妹ツールとの行き来」節にある．
 
 ## 見本
 
@@ -35,7 +48,7 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル
 | [`examples/golf_course.md`](examples/golf_course.md) | 架空の研究データ (草地性種) を使った，見本に近い実例。`layout:` で非対称配置を再現する |
 
 いずれも `pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<ファイル>` で
-PDF を作れる (`golf_course.md` は内容が多いので `-FontSize 26pt` を付ける)．
+PDF を作れる (文字を小さくする必要のある見本は，ヘッダーに `font-size: 26pt` と書いてある)．
 
 ## 開発の経緯
 

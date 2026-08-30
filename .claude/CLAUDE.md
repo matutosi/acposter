@@ -70,6 +70,26 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
+- 2026-08-31 05:47 (x280-home) その9
+  **ggposter・qtposter との間で原稿を移し替えやすくした** (ユーザ確定の 1・2・c)。
+  3系統の比較は `todo/.claude/notes/poster_tools.md` にある。
+  - **ヘッダーのキー名を別名で受ける** (`poster.lua`)。`author` は `authors`・
+    `poster-authors`，`institute` は `institutes`・`affiliation(s)`，`note` は
+    `funding`・`footer` でも書ける。
+  - **用紙・向き・段数・文字サイズを md のヘッダーでも書ける** (`make_poster_pdf.ps1`)。
+    `paper`・`orientation`・`columns` (`cols`)・`font-size` (`font_size`)。
+    **引数を書けばそちらが優先** (`$PSBoundParameters` で明示指定を見分ける)。
+    これに伴い `Get-FrontMatter` の正規表現を**字下げの無い行だけ**に限定した
+    (`grid:` の下の `columns:` を拾ってしまうため)。
+  - **`size` はどちらの別名にもしない**。ggposter では用紙，qtposter では文字サイズを
+    指すため。用紙は `paper`，文字は `font-size` と書き分ける。
+  - **`layout:` は触らない**。ggposter の `layout:` とは同名で別構造なので，
+    **`grid:` を「移し替えの共通形」と位置づけて SKILL.md・README に明記した**。
+  - 見本の回帰を確認済み (4本とも 1 ページ・箱数一致)。このとき
+    **howto2・howto3 の commit 済み PDF が `-FontSize 26pt` で作られていたのに，
+    その値がリポジトリのどこにも記録されていない**ことが分かったので，
+    3本のヘッダーに `font-size: 26pt` を書き込んだ (再生成で tmp.html はバイト一致)。
+
 - 2026-08-30 (このセッション，x280-home) その8
   **`grid:` と `layout:` を両方書いたときに警告を出すようにした** (ユーザの指摘)．
   それまでは `grid:` が黙って優先され，`layout:` は何も言わずに捨てられていたので，

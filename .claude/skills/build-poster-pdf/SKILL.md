@@ -1,6 +1,6 @@
 ---
 name: build-poster-pdf
-description: 学会発表の学術ポスター(A0/A1・1枚)のMarkdown原稿を、pandoc + ヘッドレスChromeでPDFにするスキル。LaTeXを使わない。原稿の先頭にYAMLヘッダー(`title`/`author`/`institute`/`type`/`note`)を置き、`type`が`学術ポスター`のときに処理する。表題・著者・所属は緑地の表題帯として自動生成し、`date`は読み飛ばす。本文は`# `見出し1つが緑角丸枠(箱)になり、既定では2段組みの新聞調に流し込む(左列を上から埋め右列へ)。ヘッダーに`layout:`(見出し名の行列)か`grid:`(各箱の x/y/w/h 座標)を書くとCSS Gridで箱の配置を明示でき、見本のような非対称な配置も再現できる。用紙はA0/A1・縦横を選べ、できたPDFのページ数(常に1のはず)・用紙実寸・箱の数・埋め込みフォントを検算して表示する。出力名は既定で`<mdの基幹名>.pdf`。ユーザーが「ポスターのPDFを作って」「学術ポスターをPDF化」「A0のポスターを組んで」「ポスターを再生成して」などと言ったときに使う。A4 1枚の要旨はbuild-abstract-pdf、投影資料(スライド)はbuild-slide-pdf、書籍や長い原稿はbuild-book-pdfを使う。既存のRベースツール ggposter とは別系統(置き換えではない)。
+description: 学会発表の学術ポスター(A0/A1・1枚)のMarkdown原稿を、pandoc + ヘッドレスChromeでPDFにするスキル。LaTeXを使わない。原稿の先頭にYAMLヘッダー(`title`/`author`/`institute`/`type`/`note`)を置き、`type`が`学術ポスター`のときに処理する。表題・著者・所属は緑地の表題帯として自動生成し、`date`は読み飛ばす。本文は`# `見出し1つが緑角丸枠(箱)になり、既定では2段組みの新聞調に流し込む(左列を上から埋め右列へ)。ヘッダーに`layout:`(見出し名の行列)か`grid:`(各箱の x/y/w/h 座標)を書くとCSS Gridで箱の配置を明示でき、見本のような非対称な配置も再現できる。用紙はA0/A1・縦横を選べ、できたPDFのページ数(常に1のはず)・用紙実寸・箱の数・埋め込みフォントを検算して表示する。出力名は既定で`<mdの基幹名>.pdf`。用紙・向き・段数・文字サイズは引数でもヘッダー(`paper`/`orientation`/`columns`/`font-size`)でも書け、姉妹ツール ggposter・qtposter と共通のキー名(`poster-authors`・`institutes`・`footer` など)も別名として受ける。ユーザーが「ポスターのPDFを作って」「学術ポスターをPDF化」「A0のポスターを組んで」「ポスターを再生成して」などと言ったときに使う。A4 1枚の要旨はbuild-abstract-pdf、投影資料(スライド)はbuild-slide-pdf、書籍や長い原稿はbuild-book-pdfを使う。既存のRベースツール ggposter とは別系統(置き換えではない)。
 ---
 
 # 学術ポスターの PDF ビルド (Chrome + CSS 経路)
@@ -47,10 +47,10 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 |---|---|
 | `-Md` | 対象の md。省略すると **ヘッダーの `type`** を見て選ぶ (下記) |
 | `-Pdf` | 出力名。既定は `<md の基幹名>.pdf` |
-| `-Size A0\|A1` | 用紙サイズ (既定 `A0`) |
-| `-Orientation portrait\|landscape` | 向き (既定 `portrait`＝縦長) |
-| `-Columns N` | **`layout:`・`grid:` 未指定のとき**の段数 (既定 `2`)。どちらかを書けば列数はそちらが決める |
-| `-FontSize` | 基準文字サイズを直接指定 (既定は `-Size` ごとの目安値。**A4 に印刷して読みにくければ上げる**) |
+| `-Size A0\|A1` | 用紙サイズ (既定 `A0`)。ヘッダーの `paper` でも書ける |
+| `-Orientation portrait\|landscape` | 向き (既定 `portrait`＝縦長)。ヘッダーの `orientation` でも書ける |
+| `-Columns N` | **`layout:`・`grid:` 未指定のとき**の段数 (既定 `2`)。どちらかを書けば列数はそちらが決める。ヘッダーの `columns`/`cols` でも書ける |
+| `-FontSize` | 基準文字サイズを直接指定 (既定は `-Size` ごとの目安値。**A4 に印刷して読みにくければ上げる**)。ヘッダーの `font-size` でも書ける |
 | `-KeepHtml` | 中間 HTML (`<基幹名>.tmp.html`) を残す。段組みの崩れを目視で確かめるときに使う |
 | `-Css` / `-Lua` | 体裁ファイルを明示する |
 
@@ -82,6 +82,10 @@ note: "※本研究はJSPS科研費 15K07833 の助成を受けた"
 | `date` | **読み飛ばす** (ポスターでは使わない)。書いてあっても PDF には出ない |
 | `layout` | 箱の配置を**見た目どおりの行列**で書きたいときだけ (下記「箱の配置 (`layout`)」) |
 | `grid` | 箱の配置を**座標 (x/y/w/h)** で書きたいときだけ (下記「箱の配置を座標で決める」)。`layout` より優先 (両方あると警告) |
+| `paper` | 用紙 (`A0`/`A1`)。`-Size` と同じ。**引数を書けばそちらが優先** |
+| `orientation` | 向き (`portrait`/`landscape`)。`-Orientation` と同じ |
+| `columns` | 段数。`cols` でも受ける。`-Columns` と同じ |
+| `font-size` | 基準文字サイズ (`30pt` など)。`font_size` でも受ける。`-FontSize` と同じ |
 
 本文の書き方は次のとおり。
 
@@ -191,6 +195,45 @@ grid:
 - `-KeepHtml` を付けて実行し、`<基幹名>.tmp.html` を Chrome で直接開いて確かめる。
 - ページ数が1を超えていたら、内容が用紙サイズを超えてあふれている強いシグナル。
 - 崩れる箱だけ `{.full}` を外す／`layout` の行を組み替える／`-FontSize` を下げる、で調整する。
+
+## 姉妹ツールとの行き来 (ggposter / qtposter)
+
+同じ種類のポスターを作るツールが3つある。**置き換えではなく，案件ごとに選ぶ**。
+
+| | 経路 | 原稿の形 | 図の渡し方 |
+|---|---|---|---|
+| **acposter** (これ) | md → pandoc → Chrome | 散文 (`# ` が箱) | 画像ファイル |
+| **ggposter** | R → gtable → PDF | 構造化データ (R list / YAML) | R オブジェクト (ggplot 等) |
+| **qtposter** | qmd → Quarto → Typst | 散文 (`# ` が箱) | 画像ファイル |
+
+**本文の書き方は統一できない** (構造化データと散文という根の違い)。そのかわり，
+**移し替えのときに書き直さずに済む部分**を2つ揃えてある (2026-08-31)。
+
+- **ヘッダーのキー名は別名で受ける**。3つのツールが同じ意味に使っている名前は，
+  どれで書いても通る。
+
+  | 意味 | acposter の正 | 受ける別名 |
+  |---|---|---|
+  | 著者 | `author` | `authors`・`poster-authors` |
+  | 所属 | `institute` | `institutes`・`affiliation`・`affiliations` |
+  | 注記 | `note` | `funding`・`footer` |
+  | 用紙 | `paper` | (無し。`-Size` と同義) |
+  | 段数 | `columns` | `cols` |
+  | 文字サイズ | `font-size` | `font_size` |
+
+  **`size` はどのツールでも別名にしない**。ggposter では用紙，qtposter では文字サイズを
+  指しており，黙って取り違えるとポスターが別物になるため。用紙は `paper`，
+  文字は `font-size` と書き分ける。
+
+- **`grid:` が「移し替えの共通形」**。acposter と ggposter の `grid:` は
+  **完全に同じ書式** (`columns` ＋ `boxes` の `name`/`x`/`y`/`w`/`h`，0 起点，
+  `w`/`h` の既定は 1，重なり・はみ出し・名前の不一致はエラー)。配置をそのまま移したい
+  ときは `grid:` で書く。
+  **`layout:` は移し替えに使えない**。名前は同じでも構造が違う
+  (acposter は「行 → 列の割り」の行列，ggposter は「列 → 箱の並び」の名前付きリスト)。
+  qtposter には `layout:`・`grid:` のどちらも無い (段送りは `{.break}`)。
+
+3つの比較の全体は `todo/.claude/notes/poster_tools.md` にある。
 
 ## 中身
 
