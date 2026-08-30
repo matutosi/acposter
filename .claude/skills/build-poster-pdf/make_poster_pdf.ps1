@@ -131,40 +131,52 @@ function Get-MetaValue($fm, [string[]]$names) {
   }
   return $null
 }
+# 引数とヘッダーの両方に書いてあったら**引数を採る** (その場の上書きの意図が強いため)．
+# ただし**黙って捨てない** — 値が食い違うときは grid:/layout: の併記と同じく警告を出す．
+# ヘッダーの値は，引数で上書きされる場合でも**必ず検査する** (書き間違いに気づけるように)．
 $fromHeader = @()
-if (-not $PSBoundParameters.ContainsKey('Size')) {
-  $v = Get-MetaValue $fm @('paper')
-  if ($v) {
-    $u = $v.ToUpperInvariant()
-    if (-not $SIZE_MM.Contains($u)) { throw "ヘッダーの paper が不正: $v (A0 か A1)．" }
-    $Size = $u; $fromHeader += "paper=$u"
-  }
+$overridden = @()
+
+$v = Get-MetaValue $fm @('paper')
+if ($v) {
+  $u = $v.ToUpperInvariant()
+  if (-not $SIZE_MM.Contains($u)) { throw "ヘッダーの paper が不正: $v (A0 か A1)．" }
+  if ($PSBoundParameters.ContainsKey('Size')) {
+    if ($u -ne $Size) { $overridden += "paper (ヘッダー $u / 引数 -Size $Size)" }
+  } else { $Size = $u; $fromHeader += "paper=$u" }
 }
-if (-not $PSBoundParameters.ContainsKey('Orientation')) {
-  $v = Get-MetaValue $fm @('orientation')
-  if ($v) {
-    $l = $v.ToLowerInvariant()
-    if ($l -notin @('portrait', 'landscape')) { throw "ヘッダーの orientation が不正: $v (portrait か landscape)．" }
-    $Orientation = $l; $fromHeader += "orientation=$l"
-  }
+
+$v = Get-MetaValue $fm @('orientation')
+if ($v) {
+  $l = $v.ToLowerInvariant()
+  if ($l -notin @('portrait', 'landscape')) { throw "ヘッダーの orientation が不正: $v (portrait か landscape)．" }
+  if ($PSBoundParameters.ContainsKey('Orientation')) {
+    if ($l -ne $Orientation) { $overridden += "orientation (ヘッダー $l / 引数 -Orientation $Orientation)" }
+  } else { $Orientation = $l; $fromHeader += "orientation=$l" }
 }
-if (-not $PSBoundParameters.ContainsKey('Columns')) {
-  $v = Get-MetaValue $fm @('columns', 'cols')
-  if ($v) {
-    $n = 0
-    if (-not [int]::TryParse($v, [ref]$n) -or $n -lt 1) { throw "ヘッダーの columns が不正: $v (1 以上の整数)．" }
-    $Columns = $n; $fromHeader += "columns=$n"
-  }
+
+$v = Get-MetaValue $fm @('columns', 'cols')
+if ($v) {
+  $n = 0
+  if (-not [int]::TryParse($v, [ref]$n) -or $n -lt 1) { throw "ヘッダーの columns が不正: $v (1 以上の整数)．" }
+  if ($PSBoundParameters.ContainsKey('Columns')) {
+    if ($n -ne $Columns) { $overridden += "columns (ヘッダー $n / 引数 -Columns $Columns)" }
+  } else { $Columns = $n; $fromHeader += "columns=$n" }
 }
-if (-not $PSBoundParameters.ContainsKey('FontSize')) {
-  $v = Get-MetaValue $fm @('font-size', 'font_size')
-  if ($v) {
-    if ($v -notmatch '^[0-9]+(\.[0-9]+)?(pt|px|mm|em|rem)$') { throw "ヘッダーの font-size が不正: $v (例 30pt)．" }
-    $FontSize = $v; $fromHeader += "font-size=$v"
-  }
+
+$v = Get-MetaValue $fm @('font-size', 'font_size')
+if ($v) {
+  if ($v -notmatch '^[0-9]+(\.[0-9]+)?(pt|px|mm|em|rem)$') { throw "ヘッダーの font-size が不正: $v (例 30pt)．" }
+  if ($PSBoundParameters.ContainsKey('FontSize')) {
+    if ($v -ne $FontSize) { $overridden += "font-size (ヘッダー $v / 引数 -FontSize $FontSize)" }
+  } else { $FontSize = $v; $fromHeader += "font-size=$v" }
 }
+
 if ($fromHeader.Count -gt 0) {
   Write-Host ('header : {0} (同名の引数を書けばそちらが優先)' -f ($fromHeader -join ', '))
+}
+if ($overridden.Count -gt 0) {
+  Write-Warning ('ヘッダーと引数の両方にあり，値が違う．引数を採る: {0}' -f ($overridden -join ' / '))
 }
 
 # --- 箱の数を数える (あとで検算の見込み値にする) -------------------------------

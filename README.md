@@ -23,7 +23,8 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル
 ```
 
 用紙・向き・段数・文字サイズは**引数でも md のヘッダーでも書ける**
-(`paper`・`orientation`・`columns`・`font-size`．引数を書けばそちらが優先)．
+(`paper`・`orientation`・`columns`・`font-size`)．
+**両方に書いたときは引数が勝ち，値が食い違えば警告が出る** (同じ値なら黙って通る)．
 
 引数・md の書き方の約束は
 [`.claude/skills/build-poster-pdf/SKILL.md`](.claude/skills/build-poster-pdf/SKILL.md) が正．
