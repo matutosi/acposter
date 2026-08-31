@@ -22,9 +22,11 @@ ggposter とは別系統のツールで，どちらを使うかは案件ごと�
 pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル>.md
 ```
 
-用紙・向き・段数・文字サイズ・書体は**引数でも md のヘッダーでも書ける**
-(`paper`・`orientation`・`columns`・`font-size`・`font`)．
+用紙・向き・段数・文字サイズ・書体・差し色は**引数でも md のヘッダーでも書ける**
+(`paper`・`orientation`・`columns`・`font-size`・`font`・`accent`)．
 **両方に書いたときは引数が勝ち，値が食い違えば警告が出る** (同じ値なら黙って通る)．
+**副題 (`subtitle`) とロゴ (`logo`) はヘッダーだけ**．いずれも省略でき，
+書かなければ従来どおりの見た目になる (2026-08-31 追加)．
 
 引数・md の書き方の約束は
 [`.claude/skills/build-poster-pdf/SKILL.md`](.claude/skills/build-poster-pdf/SKILL.md) が正．
