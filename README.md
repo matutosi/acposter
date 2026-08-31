@@ -144,3 +144,7 @@ qtposter の `poster_howto*.qmd`・`golf_course.qmd`．
   [`requirements/agent_E.md`](requirements/agent_E.md)，
   決定は [`requirements/decision.md`](requirements/decision.md)．
 - 詳しい進捗は [`.claude/CLAUDE.md`](.claude/CLAUDE.md)．
+
+## ライセンス
+
+**MIT** ([`LICENSE`](LICENSE))．3系統 (ggposter・acposter・qtposter) とも MIT で揃えてある．
