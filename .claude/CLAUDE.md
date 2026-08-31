@@ -70,6 +70,12 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
+- 2026-08-31 14:52 (このセッション，MATUTOSI_DP) その14
+  **README の「使い方」節を qtposter に揃えた** (ユーザ指示)．
+  実行コマンド → **ヘッダーの実例 (YAML)** → 検算 → 中間ファイルの見方，の順にした．
+  それまで散文だけで，ヘッダーに何が書けるかは SKILL.md を開かないと分からなかった．
+  `-KeepHtml` が qtposter の `keep-typ: true` にあたることも書いた．
+
 - 2026-08-31 08:56 (このセッション，MATUTOSI_DP) その13
   **副題 (`subtitle`)・ロゴ (`logo`)・差し色 (`accent`) を足した** (ユーザ指示の2)．
   3系統のうち acposter だけ無く，キーの対応表で残っていた3つの × をこれで埋めた．

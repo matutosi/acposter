@@ -35,13 +35,35 @@ TeX Live も R も要らない．**Windows・Mac・Linux で動く**．
 pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md <ファイル>.md
 ```
 
-用紙・向き・段数・文字サイズ・書体・差し色は**引数でも md のヘッダーでも書ける**
-(`paper`・`orientation`・`columns`・`font-size`・`font`・`accent`)．
-**両方に書いたときは引数が勝ち，値が食い違えば警告が出る** (同じ値なら黙って通る)．
-**副題 (`subtitle`) とロゴ (`logo`) はヘッダーだけ**．いずれも省略できる．
+ヘッダーで用紙・向き・段数・書体などを決める．
 
-できた PDF は**ページ数 (常に1のはず)・用紙実寸・箱の数・埋め込みフォント**を
-その場で検算して表示する．
+```yaml
+title: "半自然草原の植生と管理"
+subtitle: "管理の頻度と種組成"   # 省略可
+author: ["松村 俊和"]
+institute: "所属機関名"
+type: "学術ポスター"     # -Md を省いたときは，この型で対象の md を選ぶ
+paper: "A0"              # 用紙 (A0 / A1)
+orientation: portrait    # 向き (portrait / landscape)
+columns: 2               # 段数
+font: "Yu Gothic"
+font-size: 26pt
+note: "植生学会第30回大会"   # 表題帯の下端に小さく入る
+logo: images/logo.png    # 省略可．表題帯の右に入る
+accent: "#1a7a3c"        # 省略可．枠と表題帯の色 (既定は緑)
+```
+
+用紙・向き・段数・文字サイズ・書体・差し色は**引数でも書ける**
+(`-Size`・`-Orientation`・`-Columns`・`-FontSize`・`-Font`・`-Accent`)．
+**両方に書いたときは引数が勝ち，値が食い違えば警告が出る** (同じ値なら黙って通る)．
+**副題 (`subtitle`)・ロゴ (`logo`)・型 (`type`) はヘッダーだけ**．いずれも省略できる．
+
+組んだあとは**検算**する．刷ってから気づく事故を防ぐため，
+ページ数 (ポスターは常に1)・用紙実寸・箱の数・埋め込みフォントを見る
+(スクリプトの最後に自動で出る)．
+
+中間の HTML を見たいときは `-KeepHtml` を付ける (`<基幹名>.tmp.html` が残る．
+qtposter の `keep-typ: true` にあたる)．
 
 引数と書き方の約束は
 [`.claude/skills/build-poster-pdf/SKILL.md`](.claude/skills/build-poster-pdf/SKILL.md) が正．
