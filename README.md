@@ -80,9 +80,6 @@ grid:                          # 箱ごとの座標 (0 起点，w/h の既定は
 
 ## 見本
 
-**4本は ggposter・qtposter と同じ内容・同じ順で揃えてある** (2026-08-31)．
-「同じポスターを3つの書き方で書くとこうなる」を見比べられる．
-
 | | 見本 | 内容 |
 |---|---|---|
 | 1 | [`examples/poster_howto.md`](examples/poster_howto.md) | 機能の一巡り (箱・`layout:`・`{.full}`・`::: row`・画像救済) |
@@ -93,9 +90,6 @@ grid:                          # 箱ごとの座標 (0 起点，w/h の既定は
 ```powershell
 pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<ファイル>
 ```
-
-対応する見本は ggposter の `inst/extdata/poster_sample*.yml`，
-qtposter の `poster_howto*.qmd`・`golf_course.qmd`．
 
 ## 姉妹ツールとの行き来
 
@@ -147,4 +141,4 @@ qtposter の `poster_howto*.qmd`・`golf_course.qmd`．
 
 ## ライセンス
 
-**MIT** ([`LICENSE`](LICENSE))．3系統 (ggposter・acposter・qtposter) とも MIT で揃えてある．
+**MIT** ([`LICENSE`](LICENSE))．
