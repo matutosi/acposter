@@ -91,6 +91,16 @@ grid:                          # 箱ごとの座標 (0 起点，w/h の既定は
 pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<ファイル>
 ```
 
+縮小した見本 (画像をクリックすると原稿の md へ)．
+
+| 1. 機能の一巡り | 2. 入力と出力の早見表 |
+|---|---|
+| [<img src="previews/poster_howto.png" width="320">](examples/poster_howto.md) | [<img src="previews/poster_howto2.png" width="320">](examples/poster_howto2.md) |
+
+| 3. 非対称な配置 | 4. 実際のポスターに近い例 |
+|---|---|
+| [<img src="previews/poster_howto3.png" width="320">](examples/poster_howto3.md) | [<img src="previews/golf_course.png" width="320">](examples/golf_course.md) |
+
 ## 姉妹ツールとの行き来
 
 **本文の書き方は統一できない** (構造化データと散文という根の違い)．
@@ -125,6 +135,7 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<フ
 | `.claude/skills/build-poster-pdf/poster.lua` | 表題帯の組み立て，`# ` → 箱，`layout:`/`grid:` の Grid 化 |
 | `examples/` | 見本4本と，その PDF |
 | `images/` | 見本が使う仮の画像 |
+| `previews/` | README に載せる見本の縮小画像 (PDF から `pdftoppm -r 18` で作る) |
 | `requirements/` | 5エージェントによる独立要件定義と，確定した方針 |
 
 ## 現状と経緯
