@@ -70,7 +70,32 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 
 ### 現在の状態
 
-- 2026-08-31 14:52 (このセッション，MATUTOSI_DP) その14
+- 2026-09-02 06:40 (このセッション，x280-home) その15
+  **ggposter を参考に点検し，出力が黙って壊れるバグ3件を直した** (ユーザ指示の1)．
+  残りの指摘 (バグ5件・リファクタリング6件・テストの穴4件) は「次にやること」に書いた．
+  - **(1) 欧文が単語ごとくっついていた**．`poster.lua` の `SoftBreak` が行末の改行を
+    **無条件に**落としていたので，1文1行で書いた英文が `plants,to clarify`・
+    `availability oflong-established` になっていた (**commit 済みの
+    `examples/golf_course.pdf` に実際に出ていた**)．`Inlines` フィルタに替え，
+    **前後がともに和文のときだけ詰め，それ以外は空白を残す**ようにした．
+    半角の丸括弧・約物は判定では読み飛ばす (和文でも半角で書くため)．
+    **`build-abstract-pdf`・`build-slide-pdf` も同じコードで同じ穴がある** (未修正)．
+  - **(2) パスに空白があると必ず失敗していた**．`Start-Process` は配列の要素を
+    引用符で囲まずに連結するので `--print-to-pdf=C:\my poster\x.pdf` が2引数に割れ，
+    Chrome が `Multiple targets are not supported in headless mode.` で落ちていた
+    (しかも60秒のポーリングを待ってから)．`--print-to-pdf`・`--user-data-dir` を
+    自分で引用符で囲み，URL は `%20`・`%23`・`%3F` に逃がす (`ConvertTo-FileUrl`)．
+  - **(3) 中身が古いままなのに「完成」と出ていた**．PDF をビューアで開いたまま
+    組み直すと `Remove-Item -ErrorAction SilentlyContinue` が黙って失敗し，
+    Chrome が書けないのに**前回のファイルのサイズが安定している**のでポーリングが
+    完成と見なしていた．消せないならそこで止めるようにした．
+  - **検証**: 3件とも直る前に再現させ，直したあとで再現しないことを確かめた．
+    見本4本を組み直し，**4本とも1ページ・箱数一致**，CI と同じ `pdftotext` の
+    文字列検査も通り，くっついた語が消えたことを確かめた．
+    **`examples/*.tmp.html` の差分が大きいのは pandoc の版差** (この PC は 3.11，
+    commit 済みのものは 3.8.2.1 で作られており，既定 CSS の書き出しが違う)．
+
+- 2026-08-31 14:52 (MATUTOSI_DP) その14
   **README の「使い方」節を qtposter に揃えた** (ユーザ指示)．
   実行コマンド → **ヘッダーの実例 (YAML)** → 検算 → 中間ファイルの見方，の順にした．
   それまで散文だけで，ヘッダーに何が書けるかは SKILL.md を開かないと分からなかった．
@@ -179,6 +204,41 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
 - それ以前は [notes/history.md](notes/history.md) を見る．
 
 ### 次にやること
+
+**【点検の残り 2026-09-02】バグ5件・リファクタリング6件・テストの穴4件**．
+すべて実機で再現を確かめてある (直したのは上の3件だけ)．ユーザの指示待ち．
+
+- **バグ4: 引数側にだけ検査が無い**．`-Font 'serif, } .box { display: none'` が
+  CSS に素通しされ**全部の箱が消える** (カンマを含むと引用符で囲まない経路に入る)．
+  `-FontSize 30` (単位なし)・`-Columns 0` も無検査で無効な CSS になる．
+  **ヘッダー経由なら3つとも弾かれる**のに引数経由だけ通る，という非対称．
+  → **リファクタリング1・2を先にやると構造的に消える**．
+- **バグ5: `grid:` の座標が数値でなくても黙って通る**．`x: 0.9` は `math.floor` で 0，
+  `x: nonsense` は既定値 0．`columns: abc` も 2 に落ちる (ggposter で直したのと同種)．
+- **バグ6: `grid.boxes` に同じ名前を2回書くと片方が黙って消える**．後に書いたほうだけ
+  残り，重なり検査もすり抜ける (別のマスなので)．SKILL.md の「1回ずつ」が効いていない．
+- **バグ7: `layout:` の重複が長方形でないと配置が黙って壊れる**．`[[A,B],[B,A]]` で
+  `grid-template-areas: "a b" "b a"` という**不正な CSS** が出て，ブラウザが宣言ごと
+  捨てるので全部の箱が自動配置になる．SKILL.md は注意書きだけで検査が無い．
+- **バグ8: 箱の数の検算がヘッダーの YAML コメントを数える**．`^#\s` が拾うため
+  「箱: 2個 / HTML 1個」と誤警告が出る．front matter を飛ばして数える．
+- **文書と実装の食い違い2件**: SKILL.md は `--fig-max-h: 30vh` と書くが実際は `13vh`，
+  基準文字サイズを `A0=26pt・A1=18pt` と書くが実際は `A0=32・A1=23`．
+- **リファクタリング**: (1) ps1 の6ブロック (paper/orientation/columns/font-size/
+  font/accent) がほぼ同型の反復 → `Resolve-Setting` 1つに括る．(2) accent の色の
+  正規表現が2か所に丸ごと重複 → `Test-CssColor` へ．(3) lua の `is_map`・`to_num` が
+  `Pandoc()` の中で毎回定義されている → top-level へ．(4) `by_name`/`matched` の構築が
+  grid 節と layout 節で重複．(5) `Get-FrontMatter` を同じファイルに2回呼んでいる．
+  (6) `Resolve-Asset` の `"build\$name"` が**バックスラッシュ直書き**で，Mac/Linux では
+  `build/` の探索が効かない (SKILL.md の「2. その下の build/」が嘘になる)．
+- **テスト**: いま単体テストは0件で，CI は見本4本を組んで `pdftotext` で1語ずつ見るだけ．
+  (a) **lua フィルタのテストが最も費用対効果が高い** — Chrome も画像も要らず，
+  `pandoc → HTML` の文字列検査だけで表題帯・別名キー・箱の切り分け・`div.fig`・
+  リンク救済・改行の詰め方・`grid`/`layout` の変換・**エラー6種**まで見られる．
+  (b) ps1 の純関数の Pester テスト (リファクタリング1・2で seam を作ってから)．
+  (c) **異常系が一度も試されていない** (壊れた md で非0終了することを CI で見る)．
+  (d) **CI に Windows が無い** (macos・ubuntu だけ)．主戦場は Windows で，
+  フォントの検算にも `$IsWindows` の分岐があるのに未検証．
 
 **【決定 2026-08-30】全体の設計方針は pandoc + ヘッドレス Chrome のまま (ユーザ確定)**．
 md-to-pdf・ダッシュボード3種を調べた上での結論なので，**以後は蒸し返さない**．

@@ -310,7 +310,14 @@ pandoc @pandocArgs
 Remove-Item $inc -Force -ErrorAction SilentlyContinue
 if ($LASTEXITCODE -ne 0) { throw "pandoc が失敗した (exit $LASTEXITCODE)．layout の見出し名が本文と揃っているか確かめる．" }
 
-Remove-Item $Pdf -Force -ErrorAction SilentlyContinue
+# 既にある PDF は**必ず**消す．消せないまま先へ進むと，Chrome が書けないのに
+# 古いファイルがそのまま残り，サイズが安定しているのでポーリングが「完成」と見なす．
+# 中身は前回のままなのに成功と表示される (2026-09-02 に再現．ビューアで PDF を
+# 開いたまま組み直すと起きる)．消せないならここで止める．
+if (Test-Path $Pdf) {
+  try { Remove-Item $Pdf -Force -ErrorAction Stop }
+  catch { throw "既にある PDF を消せない: $Pdf (ビューア等で開いたままになっていないか確かめる)" }
+}
 
 # Chrome は起動元プロセスより先に終わることがあるので，出力の完成をポーリングで待つ．
 # 一時プロファイルを使い，起動中の通常のブラウザと衝突させない．
@@ -322,9 +329,22 @@ $profileDir = Join-Path ([IO.Path]::GetTempPath()) ('chrome-pdf-' + [Guid]::NewG
 # 絶対パス ('/Users/...') を渡すと `.AbsoluteUri` が空文字列になることを確認した
 # (2026-08-29)．実機 (Mac/Linux) でどう振る舞うか検証できないため，
 # 確実に動作を検証できる自前の分岐にする．
-$url = if ($html.StartsWith('/')) { 'file://' + $html } else { 'file:///' + $html.Replace([char]92, '/') }
+#
+# **URL に使えない文字は逃がす**．空白を含むパス ('C:\my poster\x.tmp.html') を
+# そのまま渡すと，下の Start-Process が引数を割ってしまい Chrome が
+# "Multiple targets are not supported in headless mode." で落ちる
+# (2026-09-02 に再現)．`#`・`?` はそこで URL が切れるので同じく逃がす．
+function ConvertTo-FileUrl([string]$path) {
+  $p = if ($path.StartsWith('/')) { $path } else { '/' + $path.Replace([char]92, '/') }
+  $p = $p.Replace('%', '%25').Replace('#', '%23').Replace('?', '%3F').Replace(' ', '%20')
+  return 'file://' + $p
+}
+$url = ConvertTo-FileUrl $html
 
 Write-Host "chrome : $Pdf"
+# **空白を含みうる値は自分で引用符を付ける**．Start-Process は配列の要素を
+# 引用符で囲まずに1本のコマンドラインへ連結するので，付けないと引数が割れる
+# (URL 側は上で %20 に逃がしてあるので囲まなくてよい)．
 $browserArgs = @(
   '--headless=new'
   '--disable-gpu'
@@ -334,8 +354,8 @@ $browserArgs = @(
   '--disable-extensions'
   '--no-pdf-header-footer'
   '--virtual-time-budget=15000'
-  "--user-data-dir=$profileDir"
-  "--print-to-pdf=$Pdf"
+  ('--user-data-dir="{0}"' -f $profileDir)
+  ('--print-to-pdf="{0}"' -f $Pdf)
   $url
 )
 # 標準出力・標準エラーは必ずファイルへリダイレクトする (リダイレクトしないと，

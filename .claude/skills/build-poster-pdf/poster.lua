@@ -9,7 +9,8 @@
 --    段組み流し込み (CSS columns) に切り替える．
 -- 4. 画像だけの段落に div.fig を付ける (p を残すと img の max-width が効かない罠を避ける)．
 -- 5. `[文字列](画像.png)` のような書き間違い (本来 `![...]` とすべきリンク記法) を画像として救済する．
--- 6. 和文は行末の改行を詰める (md は1文1行で書いてよい)．
+-- 6. 和文どうしの境目だけ行末の改行を詰める (md は1文1行で書いてよい)．
+--    欧文の側には空白を残す (詰めると単語がくっつく)．
 
 -- 文字列を Inlines へ (空白で分けて Str と Space を並べる)
 local function to_inlines(s)
@@ -141,11 +142,77 @@ function Link(el)
   return nil
 end
 
-function SoftBreak()
-  return {}
+-- 行末の改行 (SoftBreak) の詰め方．**和文どうしの境目だけを詰め，欧文には空白を残す**．
+-- 無条件に落とすと，1文1行で書いた英文が単語ごとくっつく
+-- ("plants,to clarify"・"availability oflong-established")．
+-- 2026-09-02 まで無条件に落としており，examples/golf_course.pdf に実際に出ていた．
+local CJK_RANGES = {
+  { 0x3000, 0x303F },   -- CJK の約物 (、。「」)
+  { 0x3040, 0x30FF },   -- ひらがな・カタカナ (・ を含む)
+  { 0x31F0, 0x31FF },   -- カタカナ拡張
+  { 0x3400, 0x4DBF },   -- 漢字 拡張A
+  { 0x4E00, 0x9FFF },   -- 漢字
+  { 0xF900, 0xFAFF },   -- 互換漢字
+  { 0xFF00, 0xFF60 },   -- 全角の英数・約物 (，．()「」)
+  { 0xFFE0, 0xFFE6 },   -- 全角の記号
+}
+
+local function is_cjk(cp)
+  if cp == nil then return false end
+  for _, r in ipairs(CJK_RANGES) do
+    if cp >= r[1] and cp <= r[2] then return true end
+  end
+  return false
 end
 
--- Pandoc は要素ごとのフィルタ (Link / SoftBreak) のあとに1度だけ走る．
+-- 半角の約物・空白は「透ける」ものとして飛ばす．和文でも丸括弧・記号は半角で書くので
+-- (ユーザの表記ルール)，`…と)` の `)` だけを見て「和文ではない」と判じないため．
+-- 欧文で飛ばしても，その奥に出てくるのはラテン文字なので判定は変わらない．
+local function is_transparent(cp)
+  return cp == 0x20 or cp == 0x09
+      or (cp >= 0x21 and cp <= 0x2F) or (cp >= 0x3A and cp <= 0x40)
+      or (cp >= 0x5B and cp <= 0x60) or (cp >= 0x7B and cp <= 0x7E)
+end
+
+-- 隣の要素の「境目の文字」の符号位置を返す (last なら末尾から，そうでなければ先頭から)．
+-- Emph や Code に包まれていても中の文字が見えるよう stringify を通す．
+local function edge_cp(il, last)
+  if il == nil then return nil end
+  local ok, s = pcall(pandoc.utils.stringify, il)
+  if not ok or s == nil or s == '' then return nil end
+  local cps = {}
+  for _, c in utf8.codes(s) do cps[#cps + 1] = c end
+  local from, to, step = 1, #cps, 1
+  if last then from, to, step = #cps, 1, -1 end
+  for i = from, to, step do
+    if not is_transparent(cps[i]) then return cps[i] end
+  end
+  return nil
+end
+
+function Inlines(ils)
+  local has_softbreak = false
+  for _, il in ipairs(ils) do
+    if il.t == 'SoftBreak' then has_softbreak = true; break end
+  end
+  if not has_softbreak then return nil end
+
+  local out = pandoc.Inlines({})
+  for i, il in ipairs(ils) do
+    if il.t == 'SoftBreak' then
+      -- 前後がともに和文のときだけ詰める．それ以外は空白にする
+      -- (pandoc の既定の書き出しと同じ振る舞い)．
+      if not (is_cjk(edge_cp(ils[i - 1], true)) and is_cjk(edge_cp(ils[i + 1], false))) then
+        out:insert(pandoc.Space())
+      end
+    else
+      out:insert(il)
+    end
+  end
+  return out
+end
+
+-- Pandoc は要素ごとのフィルタ (Link / Inlines) のあとに1度だけ走る．
 function Pandoc(doc)
   -- `# ` ごとに1つの箱へ切り分ける (最初の `# ` より前の内容は捨てる)
   local boxes, cur = {}, nil
