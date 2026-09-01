@@ -40,16 +40,24 @@ jobs:
         run: |
           $md  = Join-Path $env:RUNNER_TEMP 'broken.md'
           $pdf = Join-Path $env:RUNNER_TEMP 'broken.pdf'
+          $log = Join-Path $env:RUNNER_TEMP 'broken.log'
           Set-Content -LiteralPath $md -Encoding UTF8 -Value @(
             '---', 'title: "Broken"', 'type: "学術ポスター"',
             'grid:', '  columns: 2', '  boxes:',
             '    - {name: NoSuchHeading, x: 0, y: 0}',
             '---', '', '# One', '', 'a')
-          $out = pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md $md -Pdf $pdf 2>&1
-          if ($LASTEXITCODE -eq 0) { $out; throw '壊れた md なのに成功で終わった' }
-          if (Test-Path $pdf)      { throw '壊れた md なのに PDF ができた' }
-          Write-Host '期待どおりエラーで止まった:'
-          $out | Select-Object -Last 3
+          # 出力は**必ずファイルへ逃がす**．2>&1 で受けると，捕まえたエラー行を
+          # 表示した時点でこの手順自体が失敗する (Actions の pwsh は
+          # $ErrorActionPreference = 'Stop'．2026-09-02 に踏んだ)．
+          pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md $md -Pdf $pdf *> $log
+          $code = $LASTEXITCODE
+          if ($code -eq 0)    { Get-Content $log | ForEach-Object { Write-Host $_ }; throw '壊れた md なのに成功で終わった' }
+          if (Test-Path $pdf) { throw '壊れた md なのに PDF ができた' }
+          Write-Host "期待どおりエラーで止まった (exit $code):"
+          Get-Content $log -Tail 3 | ForEach-Object { Write-Host $_ }
+          # Actions の pwsh の手順は末尾で `exit $LASTEXITCODE` される．
+          # ここまで来たら成功なので，残っている 1 を持ち越さない．
+          exit 0
 
       - name: Build poster_howto example
         shell: pwsh
