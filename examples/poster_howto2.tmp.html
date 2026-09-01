@@ -1,17 +1,20 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="pandoc" />
+  <meta name="generator" content="pandoc 3.11" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <meta name="author" content="A cheat sheet of the build-poster-pdf syntax" />
   <title>build-poster-pdf: input to output</title>
   <style>
 
-code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 
 ul.task-list[class]{list-style: none;}
@@ -21,129 +24,8 @@ width: 0.8em;
 margin: 0 0.8em 0.2em -1.6em;
 vertical-align: middle;
 }
-.display.math{display: block; text-align: center; margin: 0.5rem auto;}
 </style>
-  <style type="text/css">
-@page {
-size: 841mm 1189mm; 
-margin: 12mm;
-}
-:root {
---box-color: #1a7a3c; 
---title-bg: #1a7a3c;
---content-columns: 2; 
-}
-html { font-size: 32pt; } 
-body {
-
-
-font-family: var(--user-font, "UD デジタル 教科書体 N"), "UD Digi Kyokasho N",
-"BIZ UDPGothic", "Yu Gothic UI",
-"Hiragino Sans", "Hiragino Kaku Gothic ProN",
-"Noto Sans CJK JP", "Noto Sans JP", "IPAGothic", "TakaoPGothic",
-sans-serif;
-line-height: 1.3;
-margin: 0;
-color: #111;
-box-sizing: border-box;
-}
-*, *::before, *::after { box-sizing: border-box; }
-
-#title-block-header { display: none; }
-img { max-width: 100%; }
-
-.title-band {
-background: var(--title-bg);
-color: #fff;
-text-align: center;
-border-radius: 0.5em;
-padding: 0.7em 1.5em 0.9em;
-margin: 0 0 0.8em;
-}
-.title-band h1 { margin: 0 0 0.35em; font-size: 2em; font-weight: bold; line-height: 1.25; }
-.title-band .byline { font-size: 1.05em; }
-.title-band .note { font-size: 0.6em; opacity: 0.9; margin-top: 0.35em; }
-.title-band p { margin: 0; }
-
-.content.flow {
-column-count: var(--content-columns);
-column-gap: 1.2em;
-}
-.content.grid { gap: 0.8em; }
-
-.box {
-border: 0.15em solid var(--box-color);
-border-radius: 0.9em;
-padding: 1.4em 1em 1em;
-margin: 0 0 0.9em;
-background: #fff;
-break-inside: avoid;
-page-break-inside: avoid;
-}
-
-.content.grid > .box { margin: 0; }
-.box-title {
-display: inline-block;
-background: var(--box-color);
-color: #fff;
-font-weight: bold;
-font-size: 1.2em;
-line-height: 1.3;
-border-radius: 0.6em;
-padding: 0.25em 1em;
-margin: -1.4em 0 0.6em -0.35em;
-}
-.box-body > *:last-child { margin-bottom: 0; }
-
-.box.full { column-span: all; }
-
-:root { --fig-max-h: 13vh; }
-.fig { margin: 0.4em 0; text-align: center; }
-.fig img {
-max-width: 100%;
-max-height: var(--fig-max-h);
-height: auto;
-border: 1px solid #ccc;
-display: inline-block;
-object-fit: contain;
-}
-
-.row { display: flex; gap: 0.6em; flex-wrap: wrap; margin: 0.4em 0; }
-.row img, .row .fig { flex: 1 1 0; min-width: 0; margin: 0; }
-
-p { margin: 0 0 0.5em; }
-ul { margin: 0 0 0.4em; padding-left: 1.1em; list-style: none; }
-li { text-indent: -1.1em; padding-left: 1.1em; margin-bottom: 0.2em; }
-li::before { content: "・"; color: var(--box-color); display: inline-block; width: 1.1em; text-indent: 0; }
-li ul { margin-top: 0.15em; font-size: 0.9em; }
-li li::before { content: "-"; }
-strong { font-weight: bold; color: #b03000; }
-.small { font-size: 0.75em; }
-.xsmall { font-size: 0.6em; }
-
-code { font-family: "Consolas", "Menlo", monospace; font-size: 0.9em; background: #f2f2f2; padding: 0 0.2em; }
-pre {
-background: #f4f4f4;
-border: 1px solid #ccc;
-border-radius: 0.5em;
-padding: 0.5em 0.7em;
-font-size: 0.7em;
-line-height: 1.35;
-white-space: pre-wrap;
-word-break: break-word;
-margin: 0.3em 0 0.5em;
-}
-pre code { background: none; padding: 0; font-size: 1em; }
-table {
-border-collapse: collapse;
-font-size: 0.72em;
-width: 100%;
-margin: 0.4em 0;
-}
-th, td { border: 1px solid #999; padding: 0.2em 0.5em; }
-th { background: #eaf3ea; font-weight: bold; }
-caption { caption-side: top; text-align: left; font-size: 0.85em; margin-bottom: 0.2em; }
-</style>
+  <style type="text/css">@page {size: 841mm 1189mm; margin: 12mm;}:root {--box-color: #1a7a3c; --title-bg: #1a7a3c;--content-columns: 2; }html { font-size: 32pt; } body {font-family: var(--user-font, "UD デジタル 教科書体 N"), "UD Digi Kyokasho N","BIZ UDPGothic", "Yu Gothic UI","Hiragino Sans", "Hiragino Kaku Gothic ProN","Noto Sans CJK JP", "Noto Sans JP", "IPAGothic", "TakaoPGothic",sans-serif;line-height: 1.3;margin: 0;color: #111;box-sizing: border-box;}*, *::before, *::after { box-sizing: border-box; }#title-block-header { display: none; }img { max-width: 100%; }.title-band {position: relative; background: var(--title-bg);color: #fff;text-align: center;border-radius: 0.5em;padding: 0.7em 1.5em 0.9em;margin: 0 0 0.8em;}.title-band h1 { margin: 0 0 0.35em; font-size: 2em; font-weight: bold; line-height: 1.25; }.title-band .subtitle { font-size: 1.2em; font-weight: bold; margin: -0.15em 0 0.4em; }.title-band .byline { font-size: 1.05em; }.title-band .note { font-size: 0.6em; opacity: 0.9; margin-top: 0.35em; }.title-band p { margin: 0; }.title-band.has-logo { padding-left: 16%; padding-right: 16%; }.title-band .logo {position: absolute;right: 1.2em;top: 50%;transform: translateY(-50%);display: flex;align-items: center;gap: 0.6em;max-width: 15%; }.title-band .logo img {max-height: var(--logo-max-h, 3.2em);max-width: 100%;width: auto;border: 0;display: block;}.content.flow {column-count: var(--content-columns);column-gap: 1.2em;}.content.grid { gap: 0.8em; }.box {border: 0.15em solid var(--box-color);border-radius: 0.9em;padding: 1.4em 1em 1em;margin: 0 0 0.9em;background: #fff;break-inside: avoid;page-break-inside: avoid;}.content.grid > .box { margin: 0; }.box-title {display: inline-block;background: var(--box-color);color: #fff;font-weight: bold;font-size: 1.2em;line-height: 1.3;border-radius: 0.6em;padding: 0.25em 1em;margin: -1.4em 0 0.6em -0.35em;}.box-body > *:last-child { margin-bottom: 0; }.box.full { column-span: all; }:root { --fig-max-h: 13vh; }.fig { margin: 0.4em 0; text-align: center; }.fig img {max-width: 100%;max-height: var(--fig-max-h);height: auto;border: 1px solid #ccc;display: inline-block;object-fit: contain;}.row { display: flex; gap: 0.6em; flex-wrap: wrap; margin: 0.4em 0; }.row img, .row .fig { flex: 1 1 0; min-width: 0; margin: 0; }p { margin: 0 0 0.5em; }ul { margin: 0 0 0.4em; padding-left: 1.1em; list-style: none; }li { text-indent: -1.1em; padding-left: 1.1em; margin-bottom: 0.2em; }li::before { content: "・"; color: var(--box-color); display: inline-block; width: 1.1em; text-indent: 0; }li ul { margin-top: 0.15em; font-size: 0.9em; }li li::before { content: "-"; }strong { font-weight: bold; color: #b03000; }.small { font-size: 0.75em; }.xsmall { font-size: 0.6em; }code { font-family: "Consolas", "Menlo", monospace; font-size: 0.9em; background: #f2f2f2; padding: 0 0.2em; }pre {background: #f4f4f4;border: 1px solid #ccc;border-radius: 0.5em;padding: 0.5em 0.7em;font-size: 0.7em;line-height: 1.35;white-space: pre-wrap;word-break: break-word;margin: 0.3em 0 0.5em;}pre code { background: none; padding: 0; font-size: 1em; }table {border-collapse: collapse;font-size: 0.72em;width: 100%;margin: 0.4em 0;}th, td { border: 1px solid #999; padding: 0.2em 0.5em; }th { background: #eaf3ea; font-weight: bold; }caption { caption-side: top; text-align: left; font-size: 0.85em; margin-bottom: 0.2em; }</style>
   <style>
 @page { size: 841mm 1189mm; }
 html { font-size: 26pt; }
@@ -289,7 +171,7 @@ Layout 2 columns input
 </div>
 <div class="box-body">
 <p>No <code>layout:</code> key, so boxes flow newspaper-style (left
-column top to bottom,then the right column).</p>
+column top to bottom, then the right column).</p>
 <pre><code>---
 title: &quot;...&quot;
 ---
@@ -330,7 +212,7 @@ Layout 1 column input
 </div>
 <div class="box-body">
 <p>Add <code>{.full}</code> right after the heading text (only used when
-<code>layout:</code> isabsent; with <code>layout:</code>, a single-item
+<code>layout:</code> is absent; with <code>layout:</code>, a single-item
 row is already full width).</p>
 <pre><code># BOX D {.full}
 ...</code></pre>
@@ -341,15 +223,15 @@ row is already full width).</p>
 Layout 1 column output
 </div>
 <div class="box-body">
-<p>That one box spans the full width, breaking out of the 2-column
-flow(used for wide tables or a summary that should not be split).</p>
+<p>That one box spans the full width, breaking out of the 2-column flow
+(used for wide tables or a summary that should not be split).</p>
 <div style="margin:0.3em 0 0;">
 <div style="border:0.12em solid var(--box-color); border-radius:0.5em; padding:0.4em; text-align:center;">
 D (full width)
 </div>
 </div>
 <p>For an irregular arrangement, use <code>layout:</code> (a matrix of
-headings) or<code>grid:</code>
+headings) or <code>grid:</code>
 (<code>x</code>/<code>y</code>/<code>w</code>/<code>h</code> per box) —
 see <code>../golf_course.md</code>.</p>
 </div>
