@@ -10,7 +10,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        # Windows が主戦場なのに CI に無く，$IsWindows の分岐が未検証だった
+        # (2026-09-02 に足した)．runner に UD デジタル教科書体は入っていないので，
+        # 「埋め込まれていない」の警告は出るが，止まりはしない．
+        os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +32,24 @@ jobs:
       - name: Run poster.lua unit tests
         shell: pwsh
         run: pwsh -File tests/run_lua_tests.ps1
+
+      # 異常系．**壊れた md で必ず非0で終わる**ことを見る (エラーを握り潰していないか)．
+      # 見本は4本に揃える約束なので，md はここで作って RUNNER_TEMP に置く．
+      - name: Fail on a broken poster (error paths)
+        shell: pwsh
+        run: |
+          $md  = Join-Path $env:RUNNER_TEMP 'broken.md'
+          $pdf = Join-Path $env:RUNNER_TEMP 'broken.pdf'
+          Set-Content -LiteralPath $md -Encoding UTF8 -Value @(
+            '---', 'title: "Broken"', 'type: "学術ポスター"',
+            'grid:', '  columns: 2', '  boxes:',
+            '    - {name: NoSuchHeading, x: 0, y: 0}',
+            '---', '', '# One', '', 'a')
+          $out = pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md $md -Pdf $pdf 2>&1
+          if ($LASTEXITCODE -eq 0) { $out; throw '壊れた md なのに成功で終わった' }
+          if (Test-Path $pdf)      { throw '壊れた md なのに PDF ができた' }
+          Write-Host '期待どおりエラーで止まった:'
+          $out | Select-Object -Last 3
 
       - name: Build poster_howto example
         shell: pwsh
@@ -58,7 +79,10 @@ jobs:
       # 別物 (例: file:// URL が壊れて Chrome の新規タブページが印刷される) でも
       # 検出できなかった実例がある (2026-08-29)．pdftotext で実際のテキストを
       # 抜き出し，見本ごとの既知の文字列が入っているかを機械的に確かめる．
+      # Windows の runner には apt も brew も無いので，ここだけ Mac/Linux で回す
+      # (Windows でも見本4本は組んでおり，ページ数・箱数・フォントの検算は通る)．
       - name: Verify PDF content (not just page/box count)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           set -e

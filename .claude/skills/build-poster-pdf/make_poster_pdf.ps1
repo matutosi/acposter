@@ -102,7 +102,9 @@ function Resolve-Asset([string]$given, [string]$name) {
     if (-not (Test-Path $given)) { throw "指定されたファイルが無い: $given" }
     return (Resolve-Path $given).Path
   }
-  foreach ($p in @((Join-Path $dir $name), (Join-Path $dir "build\$name"), (Join-Path $PSScriptRoot $name))) {
+  # `build\` と直に書くと Mac/Linux では区切りにならず，build/ の探索が効かなかった
+  # (2026-09-02 に気づいた)．OS ごとの区切りは Join-Path に任せる．
+  foreach ($p in @((Join-Path $dir $name), (Join-Path (Join-Path $dir 'build') $name), (Join-Path $PSScriptRoot $name))) {
     if (Test-Path $p) { return (Resolve-Path $p).Path }
   }
   throw "$name が見つからない．"
@@ -138,65 +140,91 @@ function Get-MetaValue($fm, [string[]]$names) {
 }
 # 引数とヘッダーの両方に書いてあったら**引数を採る** (その場の上書きの意図が強いため)．
 # ただし**黙って捨てない** — 値が食い違うときは grid:/layout: の併記と同じく警告を出す．
-# ヘッダーの値は，引数で上書きされる場合でも**必ず検査する** (書き間違いに気づけるように)．
+#
+# **検査は値の出どころで分けない** (2026-09-02)．それまではヘッダーの値だけを検査して
+# いたので，引数で書くと素通りしていた．`-Font 'serif, } .box { display: none'` が
+# CSS に差し込まれて**箱が全部消え**，`-FontSize 30` (単位なし)・`-Columns 0` は
+# 無効な CSS になって黙って既定値に落ちていた．いまは同じ $Check を両方に通す．
 $fromHeader = @()
 $overridden = @()
+$bound      = $PSBoundParameters   # 引数を「明示したか」を見るため
 
-$v = Get-MetaValue $fm @('paper')
-if ($v) {
-  $u = $v.ToUpperInvariant()
-  if (-not $SIZE_MM.Contains($u)) { throw "ヘッダーの paper が不正: $v (A0 か A1)．" }
-  if ($PSBoundParameters.ContainsKey('Size')) {
-    if ($u -ne $Size) { $overridden += "paper (ヘッダー $u / 引数 -Size $Size)" }
-  } else { $Size = $u; $fromHeader += "paper=$u" }
-}
+# 差し色に使ってよい書き方 (CSS の宣言の途中へ差し込むので，閉じ記号を通さない)．
+$COLOR_PATTERN = '^(#[0-9A-Fa-f]{3,8}|[A-Za-z]+|(rgb|rgba|hsl|hsla)\([0-9A-Za-z%.,\s/]+\))$'
 
-$v = Get-MetaValue $fm @('orientation')
-if ($v) {
-  $l = $v.ToLowerInvariant()
-  if ($l -notin @('portrait', 'landscape')) { throw "ヘッダーの orientation が不正: $v (portrait か landscape)．" }
-  if ($PSBoundParameters.ContainsKey('Orientation')) {
-    if ($l -ne $Orientation) { $overridden += "orientation (ヘッダー $l / 引数 -Orientation $Orientation)" }
-  } else { $Orientation = $l; $fromHeader += "orientation=$l" }
-}
-
-$v = Get-MetaValue $fm @('columns', 'cols')
-if ($v) {
-  $n = 0
-  if (-not [int]::TryParse($v, [ref]$n) -or $n -lt 1) { throw "ヘッダーの columns が不正: $v (1 以上の整数)．" }
-  if ($PSBoundParameters.ContainsKey('Columns')) {
-    if ($n -ne $Columns) { $overridden += "columns (ヘッダー $n / 引数 -Columns $Columns)" }
-  } else { $Columns = $n; $fromHeader += "columns=$n" }
-}
-
-$v = Get-MetaValue $fm @('font-size', 'font_size')
-if ($v) {
-  if ($v -notmatch '^[0-9]+(\.[0-9]+)?(pt|px|mm|em|rem)$') { throw "ヘッダーの font-size が不正: $v (例 30pt)．" }
-  if ($PSBoundParameters.ContainsKey('FontSize')) {
-    if ($v -ne $FontSize) { $overridden += "font-size (ヘッダー $v / 引数 -FontSize $FontSize)" }
-  } else { $FontSize = $v; $fromHeader += "font-size=$v" }
-}
-
-$v = Get-MetaValue $fm @('font', 'font-family', 'font_family')
-if ($v) {
-  # 差し込む先は CSS の宣言の途中なので，宣言や規則を閉じられる文字は通さない．
-  if ($v -match '[{};
-]') { throw "ヘッダーの font に使えない文字がある: $v" }
-  if ($PSBoundParameters.ContainsKey('Font')) {
-    if ($v -ne $Font) { $overridden += "font (ヘッダー $v / 引数 -Font $Font)" }
-  } else { $Font = $v; $fromHeader += "font=$v" }
-}
-
-$v = Get-MetaValue $fm @('accent')
-if ($v) {
-  # font と同じく CSS の宣言の途中へ差し込むので，宣言や規則を閉じられる文字は通さない．
-  # 色名 (green)・#rrggbb・rgb(…) などを想定し，それ以外の記法は素通しせずに弾く．
-  if ($v -notmatch '^(#[0-9A-Fa-f]{3,8}|[A-Za-z]+|(rgb|rgba|hsl|hsla)\([0-9A-Za-z%.,\s/]+\))$') {
-    throw "ヘッダーの accent が不正: $v (例 #1a7a3c・navy・rgb(11 79 158))．"
+# ヘッダーと引数から1つの設定を決める．戻り値が採用する値．
+#   $Check は「値を検査し，正規化した値を返す」．不正なら理由を throw する．
+function Resolve-Setting {
+  param(
+    [Parameter(Mandatory)][string]$Key,        # ヘッダーの正のキー名 (表示にも使う)
+    [string[]]$Alias = @(),                    # 同じ意味で受ける別名
+    [Parameter(Mandatory)][string]$Param,      # 対応する引数の名前
+    $Current,                                  # 引数の現在値
+    [Parameter(Mandatory)][scriptblock]$Check
+  )
+  $explicit = $bound.ContainsKey($Param) -and "$Current" -ne ''
+  $value    = $Current
+  if ($explicit) {
+    try { $value = & $Check $Current }
+    catch { throw ('-{0} が不正: {1} ({2})' -f $Param, $Current, $_.Exception.Message) }
   }
-  if ($PSBoundParameters.ContainsKey('Accent')) {
-    if ($v -ne $Accent) { $overridden += "accent (ヘッダー $v / 引数 -Accent $Accent)" }
-  } else { $Accent = $v; $fromHeader += "accent=$v" }
+
+  $raw = Get-MetaValue $fm (@($Key) + $Alias)
+  if ($null -eq $raw) { return $value }
+
+  # ヘッダーの値は，引数で上書きされる場合でも**必ず検査する**
+  # (`paper: A2` のような書き間違いは `-Size A0` を付けていてもエラーで止まる)．
+  try { $hdr = & $Check $raw }
+  catch { throw ('ヘッダーの {0} が不正: {1} ({2})' -f $Key, $raw, $_.Exception.Message) }
+
+  if ($explicit) {
+    if ("$hdr" -ne "$value") {
+      $script:overridden += ('{0} (ヘッダー {1} / 引数 -{2} {3})' -f $Key, $hdr, $Param, $value)
+    }
+    return $value
+  }
+  $script:fromHeader += "$Key=$hdr"
+  return $hdr
+}
+
+$Size = Resolve-Setting -Key 'paper' -Param 'Size' -Current $Size -Check {
+  param($v)
+  $u = "$v".ToUpperInvariant()
+  if (-not $SIZE_MM.Contains($u)) { throw 'A0 か A1' }
+  $u
+}
+
+$Orientation = Resolve-Setting -Key 'orientation' -Param 'Orientation' -Current $Orientation -Check {
+  param($v)
+  $l = "$v".ToLowerInvariant()
+  if ($l -notin @('portrait', 'landscape')) { throw 'portrait か landscape' }
+  $l
+}
+
+$Columns = Resolve-Setting -Key 'columns' -Alias 'cols' -Param 'Columns' -Current $Columns -Check {
+  param($v)
+  $n = 0
+  if (-not [int]::TryParse("$v", [ref]$n) -or $n -lt 1) { throw '1 以上の整数' }
+  $n
+}
+
+$FontSize = Resolve-Setting -Key 'font-size' -Alias 'font_size' -Param 'FontSize' -Current $FontSize -Check {
+  param($v)
+  if ("$v" -notmatch '^[0-9]+(\.[0-9]+)?(pt|px|mm|em|rem)$') { throw '例 30pt．単位まで書く' }
+  "$v"
+}
+
+$Font = Resolve-Setting -Key 'font' -Alias 'font-family', 'font_family' -Param 'Font' -Current $Font -Check {
+  param($v)
+  # 差し込む先は CSS の宣言の途中なので，宣言や規則を閉じられる文字は通さない．
+  if ("$v" -match '[{};\r\n]') { throw '{ } ; と改行は使えない' }
+  "$v"
+}
+
+$Accent = Resolve-Setting -Key 'accent' -Param 'Accent' -Current $Accent -Check {
+  param($v)
+  if ("$v" -notmatch $COLOR_PATTERN) { throw '例 #1a7a3c・navy・rgb(11 79 158)' }
+  "$v"
 }
 
 if ($fromHeader.Count -gt 0) {
@@ -208,9 +236,19 @@ if ($overridden.Count -gt 0) {
 
 # --- 箱の数を数える (あとで検算の見込み値にする) -------------------------------
 # コードブロックの中の見出し記号は数えない．
-$inFence = $false
+# **ヘッダー (--- で囲む YAML) も飛ばす**．YAML のコメント (`# ...`) を箱として
+# 数えてしまい，「箱の数が見込みと違う」と誤警告が出ていた (2026-09-02 に直した)．
+$inFence  = $false
+$inHeader = $false
 $boxCount = 0
+$lineNo   = 0
 foreach ($line in (Get-Content -LiteralPath $Md -Encoding UTF8)) {
+  $lineNo++
+  if ($lineNo -eq 1 -and $line.Trim() -eq '---') { $inHeader = $true; continue }
+  if ($inHeader) {
+    if ($line.Trim() -eq '---') { $inHeader = $false }
+    continue
+  }
   if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
   if (-not $inFence -and $line -match '^#\s') { $boxCount++ }
 }
@@ -267,12 +305,9 @@ if ($Font) {
 }
 
 # 差し色は枠・見出し帯・表題帯をまとめて変える (poster.css の2つの変数を上書きする)．
-# ヘッダー経由でも引数経由でも，差し込む前にここで必ず検査する．
+# 値の検査は出どころによらず Resolve-Setting で済んでいる (ここで重ねて書かない)．
 $accentDecl = ''
 if ($Accent) {
-  if ($Accent -notmatch '^(#[0-9A-Fa-f]{3,8}|[A-Za-z]+|(rgb|rgba|hsl|hsla)\([0-9A-Za-z%.,\s/]+\))$') {
-    throw "-Accent が不正: $Accent (例 #1a7a3c・navy・rgb(11 79 158))．"
-  }
   $accentDecl = "`n:root { --box-color: $Accent; --title-bg: $Accent; }"
 }
 
