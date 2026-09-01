@@ -9,8 +9,8 @@
 --    段組み流し込み (CSS columns) に切り替える．
 -- 4. 画像だけの段落に div.fig を付ける (p を残すと img の max-width が効かない罠を避ける)．
 -- 5. `[文字列](画像.png)` のような書き間違い (本来 `![...]` とすべきリンク記法) を画像として救済する．
--- 6. 和文どうしの境目だけ行末の改行を詰める (md は1文1行で書いてよい)．
---    欧文の側には空白を残す (詰めると単語がくっつく)．
+-- 6. 和文が絡む境目では行末の改行を詰める (md は1文1行で書いてよい)．
+--    欧文どうしの境目にだけ空白を残す (詰めると単語がくっつく)．
 
 -- 文字列を Inlines へ (空白で分けて Str と Space を並べる)
 local function to_inlines(s)
@@ -142,7 +142,7 @@ function Link(el)
   return nil
 end
 
--- 行末の改行 (SoftBreak) の詰め方．**和文どうしの境目だけを詰め，欧文には空白を残す**．
+-- 行末の改行 (SoftBreak) の詰め方．**和文が絡む境目は詰め，欧文どうしの境目にだけ空白を残す**．
 -- 無条件に落とすと，1文1行で書いた英文が単語ごとくっつく
 -- ("plants,to clarify"・"availability oflong-established")．
 -- 2026-09-02 まで無条件に落としており，examples/golf_course.pdf に実際に出ていた．
@@ -200,9 +200,12 @@ function Inlines(ils)
   local out = pandoc.Inlines({})
   for i, il in ipairs(ils) do
     if il.t == 'SoftBreak' then
-      -- 前後がともに和文のときだけ詰める．それ以外は空白にする
-      -- (pandoc の既定の書き出しと同じ振る舞い)．
-      if not (is_cjk(edge_cp(ils[i - 1], true)) and is_cjk(edge_cp(ils[i + 1], false))) then
+      -- **どちらか一方でも和文なら詰める**．空白を入れるのは両側とも欧文のときだけ
+      -- (pandoc の既定の書き出しと同じ振る舞い)．和文と欧文の境目は，和文の組版では
+      -- 空白を置かない．「ともに和文のときだけ詰める」にすると，
+      -- 「…である．⏎2025年には…」が「である． 2025年」になってしまう
+      -- (2026-09-02 に実際の要旨の原稿で見つけた)．
+      if not (is_cjk(edge_cp(ils[i - 1], true)) or is_cjk(edge_cp(ils[i + 1], false))) then
         out:insert(pandoc.Space())
       end
     else

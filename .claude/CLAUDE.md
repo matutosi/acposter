@@ -77,9 +77,15 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1
     **無条件に**落としていたので，1文1行で書いた英文が `plants,to clarify`・
     `availability oflong-established` になっていた (**commit 済みの
     `examples/golf_course.pdf` に実際に出ていた**)．`Inlines` フィルタに替え，
-    **前後がともに和文のときだけ詰め，それ以外は空白を残す**ようにした．
+    **和文が絡む境目は詰め，欧文どうしの境目にだけ空白を残す**ようにした．
     半角の丸括弧・約物は判定では読み飛ばす (和文でも半角で書くため)．
-    **`build-abstract-pdf`・`build-slide-pdf` も同じコードで同じ穴がある** (未修正)．
+    - **最初は「前後がともに和文のときだけ詰める」と書いて逆の副作用を出した**．
+      実際の要旨の原稿 (`2610_agentAI`) で確かめたところ，`…である．⏎2025年には`・
+      `…できる．⏎Rには` のように**次の行がラテン文字で始まると空白が入って**いた．
+      和文の組版では和文と欧文の境目に空白を置かないので，条件を `and` から
+      `or` に改めた．**実物の原稿で突き合わせなければ気づけなかった**．
+    - **`build-abstract-pdf`・`build-slide-pdf` にも同じ修正を移した** (同日．
+      3つのスキルが同じコードを持っていた)．実体は `todo/.claude/user/skills/`．
   - **(2) パスに空白があると必ず失敗していた**．`Start-Process` は配列の要素を
     引用符で囲まずに連結するので `--print-to-pdf=C:\my poster\x.pdf` が2引数に割れ，
     Chrome が `Multiple targets are not supported in headless mode.` で落ちていた
