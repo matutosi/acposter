@@ -24,6 +24,12 @@ jobs:
           pwsh -Version
           Write-Host "IsWindows=$IsWindows IsMacOS=$IsMacOS IsLinux=$IsLinux"
 
+      # poster.lua の単体テスト．Chrome も画像も要らないので数秒で終わる．
+      # 見本のビルドより先に置く (壊れていればここで分かる)．
+      - name: Run poster.lua unit tests
+        shell: pwsh
+        run: pwsh -File tests/run_lua_tests.ps1
+
       - name: Build poster_howto example
         shell: pwsh
         run: |

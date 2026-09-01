@@ -155,10 +155,26 @@ pwsh -File .claude/skills/build-poster-pdf/make_poster_pdf.ps1 -Md examples/<フ
 | `.claude/skills/build-poster-pdf/make_poster_pdf.ps1` | 本体 (pandoc → Chrome → 検算) |
 | `.claude/skills/build-poster-pdf/poster.css` | 体裁 (箱・表題帯・段組み・図) |
 | `.claude/skills/build-poster-pdf/poster.lua` | 表題帯の組み立て，`# ` → 箱，`layout:`/`grid:` の Grid 化 |
+| `tests/run_lua_tests.ps1` | `poster.lua` の単体テスト (下記) |
 | `examples/` | 見本4本と，その PDF |
 | `images/` | 見本が使う仮の画像 |
 | `previews/` | README に載せる見本の縮小画像 (PDF から `pdftoppm -r 18` で作る) |
 | `requirements/` | 5エージェントによる独立要件定義と，確定した方針 |
+
+## テスト
+
+```powershell
+pwsh -File tests/run_lua_tests.ps1
+```
+
+小さな md を pandoc に通し，出てきた HTML とエラー・警告の文面を確かめる (42件)．
+**Chrome も画像も要らない**ので数秒で終わり，3つの OS で同じに走る．
+見ているのは主に「ポスターが組めるか」ではなく **「書き間違いを黙って通さないか」**．
+座標の書き損じ・見出し名の食い違い・箱の重なり・`layout:` の非長方形などが，
+**PDF ができてしまう前にエラーで止まる**ことを1件ずつ確かめている．
+
+見本4本のビルド (Chrome まで通す) は GitHub Actions が macOS と Ubuntu で回し，
+できた PDF の中身を `pdftotext` で確かめて成果物として上げる．
 
 ## 現状と経緯
 

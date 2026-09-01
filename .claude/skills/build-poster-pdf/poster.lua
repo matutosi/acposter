@@ -284,11 +284,17 @@ function Pandoc(doc)
     return true
   end
 
-  -- メタデータの値を数値へ (無ければ既定値)
-  local function to_num(v, default)
+  -- メタデータの値を数値へ (無ければ既定値)．
+  -- **書き間違いを黙って既定値に落とさない** (2026-09-02)．それまでは
+  -- `x: 0.9` が math.floor で 0 に，`x: なにか` が既定値の 0 になり，
+  -- 警告も出ないまま別の場所へ置かれていた．
+  local function to_num(v, default, what)
     if v == nil then return default end
-    local n = tonumber(pandoc.utils.stringify(v))
-    if n == nil then return default end
+    local s = pandoc.utils.stringify(v)
+    local n = tonumber(s)
+    if n == nil or n ~= math.floor(n) then
+      error(('%s は整数で書く (今は "%s")．'):format(what, s))
+    end
     return math.floor(n)
   end
 
@@ -302,7 +308,7 @@ function Pandoc(doc)
 
   if grid_meta and is_map(grid_meta) then
     -- --- 1. 座標指定 (gridstack.js 風の x/y/w/h) -----------------------------
-    local cols = to_num(grid_meta.columns, 2)
+    local cols = to_num(grid_meta.columns, 2, 'grid.columns')
     if cols < 1 then error('grid.columns は1以上にする (今は ' .. cols .. ')．') end
 
     local items = grid_meta.boxes
@@ -314,6 +320,7 @@ function Pandoc(doc)
     for _, bx in ipairs(boxes) do by_name[normalize(bx.name)] = bx end
     local matched = {}
     local used = {}   -- 重なりの検査用 ("x,y" → 見出し名)
+    local seen = {}   -- 名前の重複の検査用 (正規化した見出し名 → 書いてあった名前)
 
     for _, item in ipairs(items) do
       if not is_map(item) then
@@ -325,12 +332,18 @@ function Pandoc(doc)
       if not bx then
         error('grid.boxes の見出し名が本文に無い: "' .. nm .. '"．`# ` の見出しと一字一句 (空白は詰めて) 揃える．')
       end
+      -- 同じ名前を2回書くと**後に書いたほうだけが残り，先の座標が黙って消える**
+      -- (別のマスなら重なりの検査もすり抜ける)．2026-09-02 に検査を足した．
+      if seen[normalize(nm)] then
+        error(('grid.boxes に "%s" が2回ある．1つの見出しは1回だけ書く (縦・横に伸ばすのは h・w)．'):format(nm))
+      end
+      seen[normalize(nm)] = nm
       matched[bx] = true
 
-      local x = to_num(item.x, 0)
-      local y = to_num(item.y, 0)
-      local w = to_num(item.w, 1)
-      local h = to_num(item.h, 1)
+      local x = to_num(item.x, 0, ('grid.boxes の "%s" の x'):format(nm))
+      local y = to_num(item.y, 0, ('grid.boxes の "%s" の y'):format(nm))
+      local w = to_num(item.w, 1, ('grid.boxes の "%s" の w'):format(nm))
+      local h = to_num(item.h, 1, ('grid.boxes の "%s" の h'):format(nm))
       if x < 0 or y < 0 then error('grid.boxes の x・y は0以上にする ("' .. nm .. '")．') end
       if w < 1 or h < 1 then error('grid.boxes の w・h は1以上にする ("' .. nm .. '")．') end
       if x + w > cols then
@@ -386,16 +399,48 @@ function Pandoc(doc)
         error('本文の見出し "' .. bx.name .. '" が layout に無い．layout に全ての見出しを1回ずつ書く．')
       end
     end
-    local area_rows = {}
+    local cell_rows = {}
     for _, slugs in ipairs(rows) do
+      if #slugs == 0 then error('layout に空の行がある．使わない行は消す．') end
       if max_cols % #slugs ~= 0 then
         error('layout の行の要素数 (' .. #slugs .. ') が列数 (' .. max_cols .. ') を割り切れない．')
       end
-      local span = max_cols / #slugs
+      local span = max_cols // #slugs
       local cells = {}
       for _, s in ipairs(slugs) do
         for _ = 1, span do cells[#cells + 1] = s end
       end
+      cell_rows[#cell_rows + 1] = cells
+    end
+
+    -- 同じ名前を何行にも書いて縦に結合できるが，**長方形にならないと
+    -- grid-template-areas が不正になり，ブラウザが宣言ごと捨てる**
+    -- (箱が勝手な位置へ散り，別物の配置の PDF ができてしまう)．
+    -- 2026-09-02 まで検査が無く，SKILL.md の「長方形になるように書く」に頼っていた．
+    local span_of = {}
+    for r, cells in ipairs(cell_rows) do
+      for c, s in ipairs(cells) do
+        local b = span_of[s]
+        if b == nil then
+          span_of[s] = { r1 = r, r2 = r, c1 = c, c2 = c, n = 1 }
+        else
+          if r < b.r1 then b.r1 = r end
+          if r > b.r2 then b.r2 = r end
+          if c < b.c1 then b.c1 = c end
+          if c > b.c2 then b.c2 = c end
+          b.n = b.n + 1
+        end
+      end
+    end
+    for _, bx in ipairs(boxes) do
+      local b = span_of[bx.slug]
+      if b and b.n ~= (b.r2 - b.r1 + 1) * (b.c2 - b.c1 + 1) then
+        error(('layout の "%s" が長方形になっていない．同じ見出しは続いた行・列に固めて書く．'):format(bx.name))
+      end
+    end
+
+    local area_rows = {}
+    for _, cells in ipairs(cell_rows) do
       area_rows[#area_rows + 1] = '"' .. table.concat(cells, ' ') .. '"'
     end
     content_attr = pandoc.Attr('', { 'content', 'grid' }, {
