@@ -45,6 +45,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# 純関数 (ヘッダーの読み取り・設定の決定・file:// URL) は別ファイルに分けてある．
+# tests/run_ps1_tests.ps1 が同じものを読み込んで単体で確かめる (2026-09-02)．
+. (Join-Path $PSScriptRoot 'poster_common.ps1')
+
 $SUPPORTED_TYPES = @('学術ポスター', 'ポスター')
 
 # A系列の縦向き実寸 (mm)．横長は幅高を入れ替える．
@@ -52,31 +56,22 @@ $SIZE_MM = @{ A0 = @{ w = 841; h = 1189 }; A1 = @{ w = 594; h = 841 } }
 # 基準フォントサイズ (pt)．A1 は A0 の 1/√2 相当を丸めた値．
 $FONT_PT = @{ A0 = 32; A1 = 23 }
 
-function Get-FrontMatter([string]$path) {
-  $lines = Get-Content -LiteralPath $path -Encoding UTF8
-  if ($lines.Count -eq 0 -or $lines[0].Trim() -ne '---') { return $null }
-  $fm = [ordered]@{}
-  for ($i = 1; $i -lt $lines.Count; $i++) {
-    if ($lines[$i].Trim() -eq '---') { return $fm }
-    if ($lines[$i] -match '^\s*#') { continue }
-    # 字下げのある行は入れ子 (grid: の下の columns: など) なので採らない．
-    if ($lines[$i] -match '^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$') {
-      $fm[$matches[1]] = $matches[2].Trim().Trim('"', "'")
+# --- 対象の md を決める -------------------------------------------------------
+# 自動で見つけたときは，そのとき読んだヘッダーを控えておく (同じファイルを二度読まない)．
+$fm = $null
+if (-not $Md) {
+  $found = @()
+  foreach ($f in (Get-ChildItem -Path . -Filter '*.md' -File -ErrorAction SilentlyContinue |
+                  Where-Object { $_.Name -notmatch '^(README|CLAUDE)\.md$' })) {
+    $h = Get-FrontMatter $f.FullName
+    if ($h -and $h.Contains('type') -and ($SUPPORTED_TYPES -contains $h['type'])) {
+      $found += ,@($f, $h)
     }
   }
-  return $fm
-}
-
-# --- 対象の md を決める -------------------------------------------------------
-if (-not $Md) {
-  $cands = @(Get-ChildItem -Path . -Filter '*.md' -File -ErrorAction SilentlyContinue |
-             Where-Object { $_.Name -notmatch '^(README|CLAUDE)\.md$' } |
-             Where-Object {
-               $f = Get-FrontMatter $_.FullName
-               $f -and $f.Contains('type') -and ($SUPPORTED_TYPES -contains $f['type'])
-             })
+  $cands = @($found | ForEach-Object { $_[0] })
   if ($cands.Count -eq 1) {
     $Md = $cands[0].FullName
+    $fm = $found[0][1]
   } elseif ($cands.Count -eq 0) {
     throw ("type が {0} の md が見つからない．-Md で指定する．" -f ($SUPPORTED_TYPES -join ' / '))
   } else {
@@ -113,7 +108,7 @@ $Css = Resolve-Asset $Css 'poster.css'
 $Lua = Resolve-Asset $Lua 'poster.lua'
 
 # --- ヘッダー (YAML front matter) を読む -------------------------------------
-$fm = Get-FrontMatter $Md
+if ($null -eq $fm) { $fm = Get-FrontMatter $Md }
 if ($null -eq $fm) {
   throw 'ヘッダー (--- で囲む YAML) が無い．title / author / institute / type を書く．'
 } elseif (-not $fm.Contains('type')) {
@@ -131,97 +126,57 @@ if ($null -eq $fm) {
 # 設定があると移し替えのたびに書き直しになるので，同じ名前でヘッダーにも書けるようにした
 # (2026-08-31)．`size` は用紙 (ggposter) と文字サイズ (qtposter) の両方の意味で
 # 使われているため，どちらの別名にもしない．用紙は `paper`，文字は `font-size` と書く．
-function Get-MetaValue($fm, [string[]]$names) {
-  if ($null -eq $fm) { return $null }
-  foreach ($n in $names) {
-    if ($fm.Contains($n) -and "$($fm[$n])" -ne '') { return "$($fm[$n])" }
-  }
-  return $null
+# 引数とヘッダーからの決め方は poster_common.ps1 の Resolve-Setting に括ってある．
+# 6つの設定はどれも「別名を見る → 検査する → 引数とヘッダーの食い違いを警告する」で
+# 同じなので，違うのは $Check (その設定に許される書き方) だけになる．
+$fromHeader = [System.Collections.ArrayList]::new()
+$overridden = [System.Collections.ArrayList]::new()
+# 6つの呼び出しに毎回同じものを渡さずに済むよう，共通の引数はまとめておく．
+$ctx = @{
+  Fm         = $fm
+  Bound      = $PSBoundParameters   # 引数を「明示したか」を見るため
+  FromHeader = $fromHeader
+  Overridden = $overridden
 }
-# 引数とヘッダーの両方に書いてあったら**引数を採る** (その場の上書きの意図が強いため)．
-# ただし**黙って捨てない** — 値が食い違うときは grid:/layout: の併記と同じく警告を出す．
-#
-# **検査は値の出どころで分けない** (2026-09-02)．それまではヘッダーの値だけを検査して
-# いたので，引数で書くと素通りしていた．`-Font 'serif, } .box { display: none'` が
-# CSS に差し込まれて**箱が全部消え**，`-FontSize 30` (単位なし)・`-Columns 0` は
-# 無効な CSS になって黙って既定値に落ちていた．いまは同じ $Check を両方に通す．
-$fromHeader = @()
-$overridden = @()
-$bound      = $PSBoundParameters   # 引数を「明示したか」を見るため
 
 # 差し色に使ってよい書き方 (CSS の宣言の途中へ差し込むので，閉じ記号を通さない)．
 $COLOR_PATTERN = '^(#[0-9A-Fa-f]{3,8}|[A-Za-z]+|(rgb|rgba|hsl|hsla)\([0-9A-Za-z%.,\s/]+\))$'
 
-# ヘッダーと引数から1つの設定を決める．戻り値が採用する値．
-#   $Check は「値を検査し，正規化した値を返す」．不正なら理由を throw する．
-function Resolve-Setting {
-  param(
-    [Parameter(Mandatory)][string]$Key,        # ヘッダーの正のキー名 (表示にも使う)
-    [string[]]$Alias = @(),                    # 同じ意味で受ける別名
-    [Parameter(Mandatory)][string]$Param,      # 対応する引数の名前
-    $Current,                                  # 引数の現在値
-    [Parameter(Mandatory)][scriptblock]$Check
-  )
-  $explicit = $bound.ContainsKey($Param) -and "$Current" -ne ''
-  $value    = $Current
-  if ($explicit) {
-    try { $value = & $Check $Current }
-    catch { throw ('-{0} が不正: {1} ({2})' -f $Param, $Current, $_.Exception.Message) }
-  }
-
-  $raw = Get-MetaValue $fm (@($Key) + $Alias)
-  if ($null -eq $raw) { return $value }
-
-  # ヘッダーの値は，引数で上書きされる場合でも**必ず検査する**
-  # (`paper: A2` のような書き間違いは `-Size A0` を付けていてもエラーで止まる)．
-  try { $hdr = & $Check $raw }
-  catch { throw ('ヘッダーの {0} が不正: {1} ({2})' -f $Key, $raw, $_.Exception.Message) }
-
-  if ($explicit) {
-    if ("$hdr" -ne "$value") {
-      $script:overridden += ('{0} (ヘッダー {1} / 引数 -{2} {3})' -f $Key, $hdr, $Param, $value)
-    }
-    return $value
-  }
-  $script:fromHeader += "$Key=$hdr"
-  return $hdr
-}
-
-$Size = Resolve-Setting -Key 'paper' -Param 'Size' -Current $Size -Check {
+$Size = Resolve-Setting @ctx -Key 'paper' -Param 'Size' -Current $Size -Check {
   param($v)
   $u = "$v".ToUpperInvariant()
   if (-not $SIZE_MM.Contains($u)) { throw 'A0 か A1' }
   $u
 }
 
-$Orientation = Resolve-Setting -Key 'orientation' -Param 'Orientation' -Current $Orientation -Check {
+$Orientation = Resolve-Setting @ctx -Key 'orientation' -Param 'Orientation' -Current $Orientation -Check {
   param($v)
   $l = "$v".ToLowerInvariant()
   if ($l -notin @('portrait', 'landscape')) { throw 'portrait か landscape' }
   $l
 }
 
-$Columns = Resolve-Setting -Key 'columns' -Alias 'cols' -Param 'Columns' -Current $Columns -Check {
+$Columns = Resolve-Setting @ctx -Key 'columns' -Alias 'cols' -Param 'Columns' -Current $Columns -Check {
   param($v)
   $n = 0
   if (-not [int]::TryParse("$v", [ref]$n) -or $n -lt 1) { throw '1 以上の整数' }
   $n
 }
 
-$FontSize = Resolve-Setting -Key 'font-size' -Alias 'font_size' -Param 'FontSize' -Current $FontSize -Check {
+$FontSize = Resolve-Setting @ctx -Key 'font-size' -Alias 'font_size' -Param 'FontSize' -Current $FontSize -Check {
   param($v)
   if ("$v" -notmatch '^[0-9]+(\.[0-9]+)?(pt|px|mm|em|rem)$') { throw '例 30pt．単位まで書く' }
   "$v"
 }
 
-$Font = Resolve-Setting -Key 'font' -Alias 'font-family', 'font_family' -Param 'Font' -Current $Font -Check {
+$Font = Resolve-Setting @ctx -Key 'font' -Alias 'font-family', 'font_family' -Param 'Font' -Current $Font -Check {
   param($v)
   # 差し込む先は CSS の宣言の途中なので，宣言や規則を閉じられる文字は通さない．
   if ("$v" -match '[{};\r\n]') { throw '{ } ; と改行は使えない' }
   "$v"
 }
 
-$Accent = Resolve-Setting -Key 'accent' -Param 'Accent' -Current $Accent -Check {
+$Accent = Resolve-Setting @ctx -Key 'accent' -Param 'Accent' -Current $Accent -Check {
   param($v)
   if ("$v" -notmatch $COLOR_PATTERN) { throw '例 #1a7a3c・navy・rgb(11 79 158)' }
   "$v"
@@ -357,23 +312,7 @@ if (Test-Path $Pdf) {
 # Chrome は起動元プロセスより先に終わることがあるので，出力の完成をポーリングで待つ．
 # 一時プロファイルを使い，起動中の通常のブラウザと衝突させない．
 $profileDir = Join-Path ([IO.Path]::GetTempPath()) ('chrome-pdf-' + [Guid]::NewGuid().ToString('N'))
-# file:// URL を OS ごとに手で組み立てる (自前ロジックにする)．
-# Mac/Linux の絶対パスは元から '/' で始まるので 'file://' + パス で3本スラッシュになる．
-# Windows は 'D:\...' の形なので '/' に変えてから 'file:///' を付ける (4本目は不要)．
-# **`[Uri]` クラスに任せるのは避ける**: Windows 上の pwsh で試したところ，Unix 形式の
-# 絶対パス ('/Users/...') を渡すと `.AbsoluteUri` が空文字列になることを確認した
-# (2026-08-29)．実機 (Mac/Linux) でどう振る舞うか検証できないため，
-# 確実に動作を検証できる自前の分岐にする．
-#
-# **URL に使えない文字は逃がす**．空白を含むパス ('C:\my poster\x.tmp.html') を
-# そのまま渡すと，下の Start-Process が引数を割ってしまい Chrome が
-# "Multiple targets are not supported in headless mode." で落ちる
-# (2026-09-02 に再現)．`#`・`?` はそこで URL が切れるので同じく逃がす．
-function ConvertTo-FileUrl([string]$path) {
-  $p = if ($path.StartsWith('/')) { $path } else { '/' + $path.Replace([char]92, '/') }
-  $p = $p.Replace('%', '%25').Replace('#', '%23').Replace('?', '%3F').Replace(' ', '%20')
-  return 'file://' + $p
-}
+# file:// URL は自前で組み立てる (poster_common.ps1 の ConvertTo-FileUrl)．
 $url = ConvertTo-FileUrl $html
 
 Write-Host "chrome : $Pdf"

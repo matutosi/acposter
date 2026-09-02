@@ -29,6 +29,31 @@ local function is_list(v)
   return type(v) == 'table' and v.t == 'MetaList'
 end
 
+-- YAML の連想配列 (MetaMap) か．
+-- **`pandoc.utils.type()` は MetaMap に対して 'Map' ではなく 'table' を返す**
+-- (2026-08-30 に実機で確認．'Map' で判定すると常に false になり，`grid:` が
+-- 黙って無視されて既定の流し込みに落ちる)．リスト・文字列を除いた table とみなす．
+local function is_map(v)
+  if type(v) ~= 'table' then return false end
+  local t = pandoc.utils.type and pandoc.utils.type(v) or nil
+  if t == 'List' or t == 'Inlines' or t == 'Blocks' then return false end
+  return true
+end
+
+-- メタデータの値を数値へ (無ければ既定値)．
+-- **書き間違いを黙って既定値に落とさない** (2026-09-02)．それまでは
+-- `x: 0.9` が math.floor で 0 に，`x: なにか` が既定値の 0 になり，
+-- 警告も出ないまま別の場所へ置かれていた．
+local function to_num(v, default, what)
+  if v == nil then return default end
+  local s = pandoc.utils.stringify(v)
+  local n = tonumber(s)
+  if n == nil or n ~= math.floor(n) then
+    error(('%s は整数で書く (今は "%s")．'):format(what, s))
+  end
+  return math.floor(n)
+end
+
 local function to_list(v)
   local out = {}
   if v == nil then return out end
@@ -92,6 +117,13 @@ end
 -- 見出し文字列どうしの突き合わせ用 (前後空白を詰め，連続空白を1つに，小文字化)
 local function normalize(s)
   return s:gsub('^%s+', ''):gsub('%s+$', ''):gsub('%s+', ' '):lower()
+end
+
+-- 見出し名 (正規化ずみ) から箱を引く表．`grid:` と `layout:` の両方で使う．
+local function index_by_name(boxes)
+  local by_name = {}
+  for _, bx in ipairs(boxes) do by_name[normalize(bx.name)] = bx end
+  return by_name
 end
 
 -- 画像だけの段落か (画像と空白以外が無い)
@@ -273,31 +305,6 @@ function Pandoc(doc)
   local layout_meta = doc.meta.layout
   local content_attr
 
-  -- YAML の連想配列 (MetaMap) か．
-  -- **`pandoc.utils.type()` は MetaMap に対して 'Map' ではなく 'table' を返す**
-  -- (2026-08-30 に実機で確認．'Map' で判定すると常に false になり，`grid:` が
-  -- 黙って無視されて既定の流し込みに落ちる)．リスト・文字列を除いた table とみなす．
-  local function is_map(v)
-    if type(v) ~= 'table' then return false end
-    local t = pandoc.utils.type and pandoc.utils.type(v) or nil
-    if t == 'List' or t == 'Inlines' or t == 'Blocks' then return false end
-    return true
-  end
-
-  -- メタデータの値を数値へ (無ければ既定値)．
-  -- **書き間違いを黙って既定値に落とさない** (2026-09-02)．それまでは
-  -- `x: 0.9` が math.floor で 0 に，`x: なにか` が既定値の 0 になり，
-  -- 警告も出ないまま別の場所へ置かれていた．
-  local function to_num(v, default, what)
-    if v == nil then return default end
-    local s = pandoc.utils.stringify(v)
-    local n = tonumber(s)
-    if n == nil or n ~= math.floor(n) then
-      error(('%s は整数で書く (今は "%s")．'):format(what, s))
-    end
-    return math.floor(n)
-  end
-
   -- 両方書いてあるときは `grid:` を使うが，**黙って無視すると書き間違いに気づけない**
   -- ので警告する (2026-08-30 に追加．エラーにはしない．どちらか一方を消せば消える)．
   if grid_meta and is_map(grid_meta) and layout_meta and is_list(layout_meta) then
@@ -316,8 +323,7 @@ function Pandoc(doc)
       error('grid: には boxes のリストが要る (例: boxes: [{name: OBJECTIVES, x: 0, y: 0}])．')
     end
 
-    local by_name = {}
-    for _, bx in ipairs(boxes) do by_name[normalize(bx.name)] = bx end
+    local by_name = index_by_name(boxes)
     local matched = {}
     local used = {}   -- 重なりの検査用 ("x,y" → 見出し名)
     local seen = {}   -- 名前の重複の検査用 (正規化した見出し名 → 書いてあった名前)
@@ -375,8 +381,7 @@ function Pandoc(doc)
       { 'style', ('display:grid; grid-template-columns: repeat(%d, 1fr);'):format(cols) }
     })
   elseif layout_meta and is_list(layout_meta) then
-    local by_name = {}
-    for _, bx in ipairs(boxes) do by_name[normalize(bx.name)] = bx end
+    local by_name = index_by_name(boxes)
     local matched = {}
     local rows, max_cols = {}, 0
     for _, row in ipairs(layout_meta) do
