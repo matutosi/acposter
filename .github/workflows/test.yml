@@ -33,6 +33,11 @@ jobs:
         shell: pwsh
         run: pwsh -File tests/run_lua_tests.ps1
 
+      # poster_common.ps1 (ps1 の純関数) の単体テスト．同じく pandoc も Chrome も要らない．
+      - name: Run poster_common.ps1 unit tests
+        shell: pwsh
+        run: pwsh -File tests/run_ps1_tests.ps1
+
       # 異常系．**壊れた md で必ず非0で終わる**ことを見る (エラーを握り潰していないか)．
       # 見本は4本に揃える約束なので，md はここで作って RUNNER_TEMP に置く．
       - name: Fail on a broken poster (error paths)

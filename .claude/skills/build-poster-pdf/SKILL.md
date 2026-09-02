@@ -326,4 +326,6 @@ grid:
 | `make_poster_pdf.ps1` | pandoc → Chrome の呼び出し。用紙サイズ・段数・文字サイズを差し込み、ページ数・用紙実寸・箱の数・フォントを検算する |
 | `poster.css` | 体裁 (@page の既定値・表題帯・緑角丸枠の箱・段組み流し込み/Grid・画像/表) |
 | `poster.lua` | ヘッダーから表題帯を組み立て、`# ` ごとに箱へ分割し、`grid`/`layout` があれば Grid 配置に変換 (重なり・はみ出しの検査つき)、画像の `div.fig` 化、`[..](img)` の画像救済 |
+| `poster_common.ps1` | ps1 の純関数 (ヘッダーの読み取り・引数とヘッダーからの設定の決定・`file://` URL の組み立て)。単体テストのための切れ目 |
 | `tests/run_lua_tests.ps1` | `poster.lua` の単体テスト (42件)。`pwsh -File tests/run_lua_tests.ps1` で走る。Chrome も画像も要らない |
+| `tests/run_ps1_tests.ps1` | `poster_common.ps1` の単体テスト (35件)。`pwsh -File tests/run_ps1_tests.ps1` で走る。pandoc も Chrome も要らない |
